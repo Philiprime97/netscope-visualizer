@@ -1,0 +1,180 @@
+import React from 'react';
+import { useTopology } from '@/contexts/TopologyContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { DeviceIcon, deviceTypeLabel } from '@/components/topology/DeviceIcons';
+import { X, Trash2, Terminal, Wifi, WifiOff, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { toast } from 'sonner';
+
+const formatBytes = (b: number) => {
+  if (b > 1e9) return `${(b / 1e9).toFixed(1)} GB`;
+  if (b > 1e6) return `${(b / 1e6).toFixed(1)} MB`;
+  return `${(b / 1e3).toFixed(1)} KB`;
+};
+
+const DevicePanel: React.FC = () => {
+  const { devices, links, selectedDeviceId, setSelectedDeviceId, removeDevice, removeLink, removeInterface, addInterface } = useTopology();
+  const { isAdmin } = useAuth();
+  const device = devices.find(d => d.id === selectedDeviceId);
+
+  if (!device) return null;
+
+  const deviceLinks = links.filter(l => l.sourceDeviceId === device.id || l.targetDeviceId === device.id);
+
+  return (
+    <div className="w-[380px] h-full glass-panel border-l border-border overflow-y-auto fade-in-up">
+      {/* Header */}
+      <div className="p-4 flex items-center justify-between border-b border-border">
+        <div className="flex items-center gap-3">
+          <DeviceIcon type={device.type} size={24} />
+          <div>
+            <h2 className="text-sm font-semibold">{device.hostname}</h2>
+            <span className="text-xs text-muted-foreground">{deviceTypeLabel[device.type]}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          {isAdmin && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
+              removeDevice(device.id);
+              toast.success('Device removed');
+            }}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          )}
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelectedDeviceId(null)}>
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-4 space-y-3">
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <InfoRow label="IP Address" value={device.ipAddress} />
+          {device.macAddress && <InfoRow label="MAC" value={device.macAddress} />}
+          <InfoRow label="OS / Image" value={device.containerImage || device.os} />
+          <InfoRow label="Uptime" value={device.uptime} />
+          <InfoRow label="Status" value={
+            <Badge variant={device.status === 'up' ? 'default' : 'destructive'} className="text-[10px] h-5">
+              {device.status.toUpperCase()}
+            </Badge>
+          } />
+        </div>
+
+        <Separator />
+
+        {/* Resource usage */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Resources</h3>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">CPU</span>
+              <span className="font-mono">{device.cpu}%</span>
+            </div>
+            <Progress value={device.cpu} className="h-1.5" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Memory</span>
+              <span className="font-mono">{device.memory}%</span>
+            </div>
+            <Progress value={device.memory} className="h-1.5" />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Interfaces */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Interfaces ({device.interfaces.length})
+            </h3>
+            {isAdmin && (
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                addInterface(device.id, {
+                  id: `${device.id}-new-${Date.now()}`,
+                  name: `eth${device.interfaces.length}`,
+                  type: 'ethernet',
+                  speed: '1G',
+                  status: 'down',
+                  rxBytes: 0,
+                  txBytes: 0,
+                  enabled: true,
+                });
+              }}>
+                <Plus className="w-3 h-3" />
+              </Button>
+            )}
+          </div>
+          <div className="space-y-1">
+            {device.interfaces.map(iface => {
+              const connectedLink = deviceLinks.find(
+                l => l.sourceInterfaceId === iface.id || l.targetInterfaceId === iface.id
+              );
+              return (
+                <div key={iface.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-secondary/50 text-xs group">
+                  <div className={`status-dot ${iface.status === 'up' ? 'status-up' : 'status-down'}`} />
+                  <span className="font-mono font-medium flex-1">{iface.name}</span>
+                  <span className="text-muted-foreground">{iface.speed}</span>
+                  {connectedLink && (
+                    <button
+                      onClick={() => isAdmin && removeLink(connectedLink.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                      title="Disconnect"
+                    >
+                      <WifiOff className="w-3 h-3" />
+                    </button>
+                  )}
+                  {!connectedLink && <Wifi className="w-3 h-3 text-muted-foreground/30" />}
+                  {isAdmin && (
+                    <button
+                      onClick={() => removeInterface(device.id, iface.id)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Traffic */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Traffic</h3>
+          {device.interfaces.filter(i => i.status === 'up').map(iface => (
+            <div key={iface.id} className="flex items-center justify-between text-[11px] font-mono">
+              <span className="text-muted-foreground">{iface.name}</span>
+              <span className="text-noc-endpoint">↓{formatBytes(iface.rxBytes)}</span>
+              <span className="text-noc-network">↑{formatBytes(iface.txBytes)}</span>
+            </div>
+          ))}
+        </div>
+
+        <Separator />
+
+        {/* Terminal */}
+        <Button variant="outline" className="w-full gap-2 text-xs" onClick={() => toast.info('Terminal feature coming soon')}>
+          <Terminal className="w-4 h-4" />
+          Open Terminal
+        </Button>
+      </div>
+    </div>
+  );
+};
+
+const InfoRow: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+  <div>
+    <span className="text-muted-foreground block mb-0.5">{label}</span>
+    <span className="font-mono text-foreground">{typeof value === 'string' ? value : value}</span>
+  </div>
+);
+
+export default DevicePanel;
