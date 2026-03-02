@@ -1,18 +1,17 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
   Controls,
   MiniMap,
-  useNodesState,
-  useEdgesState,
-  addEdge,
   type Connection,
   type Edge,
   type Node,
   BackgroundVariant,
   type NodeChange,
   type EdgeChange,
+  applyNodeChanges,
+  applyEdgeChanges,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import DeviceNode from './DeviceNode';
@@ -28,7 +27,7 @@ const TopologyCanvas: React.FC = () => {
     updatePosition, addLink, getConnectionCount,
   } = useTopology();
 
-  const initialNodes: Node[] = useMemo(() =>
+  const nodes: Node[] = useMemo(() =>
     devices.map(device => ({
       id: device.id,
       type: 'device',
@@ -38,7 +37,7 @@ const TopologyCanvas: React.FC = () => {
     [devices, positions]
   );
 
-  const initialEdges: Edge[] = useMemo(() =>
+  const edges: Edge[] = useMemo(() =>
     links.map(link => {
       const srcDevice = devices.find(d => d.id === link.sourceDeviceId);
       const tgtDevice = devices.find(d => d.id === link.targetDeviceId);
@@ -65,26 +64,24 @@ const TopologyCanvas: React.FC = () => {
     [links, devices, showAnimations, showLabels]
   );
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [localNodes, setLocalNodes] = React.useState<Node[]>(nodes);
+  const [localEdges, setLocalEdges] = React.useState<Edge[]>(edges);
 
-  // Sync when data changes
-  React.useEffect(() => {
-    setNodes(initialNodes);
-  }, [initialNodes, setNodes]);
-
-  React.useEffect(() => {
-    setEdges(initialEdges);
-  }, [initialEdges, setEdges]);
+  useEffect(() => { setLocalNodes(nodes); }, [nodes]);
+  useEffect(() => { setLocalEdges(edges); }, [edges]);
 
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
-    onNodesChange(changes);
+    setLocalNodes(nds => applyNodeChanges(changes, nds));
     changes.forEach(change => {
-      if (change.type === 'position' && change.position && change.id) {
+      if (change.type === 'position' && change.position && change.dragging === false && change.id) {
         updatePosition(change.id, change.position.x, change.position.y);
       }
     });
-  }, [onNodesChange, updatePosition]);
+  }, [updatePosition]);
+
+  const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
+    setLocalEdges(eds => applyEdgeChanges(changes, eds));
+  }, []);
 
   const onConnect = useCallback((connection: Connection) => {
     if (!connection.source || !connection.target) return;
@@ -97,7 +94,6 @@ const TopologyCanvas: React.FC = () => {
     if (!srcDevice || !tgtDevice) return;
     if (srcCount >= srcDevice.maxConnections || tgtCount >= tgtDevice.maxConnections) return;
 
-    // Pick first available interface from each
     const usedSrcIfs = links.filter(l => l.sourceDeviceId === connection.source).map(l => l.sourceInterfaceId);
     const usedTgtIfs = links.filter(l => l.targetDeviceId === connection.target).map(l => l.targetInterfaceId);
     const srcIf = srcDevice.interfaces.find(i => !usedSrcIfs.includes(i.id));
@@ -136,10 +132,10 @@ const TopologyCanvas: React.FC = () => {
   return (
     <div className="w-full h-full">
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={localNodes}
+        edges={localEdges}
         onNodesChange={handleNodesChange}
-        onEdgesChange={onEdgesChange}
+        onEdgesChange={handleEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}

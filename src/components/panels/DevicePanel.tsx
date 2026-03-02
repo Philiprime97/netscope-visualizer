@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DeviceIcon, deviceTypeLabel } from '@/components/topology/DeviceIcons';
-import { X, Trash2, Terminal, Wifi, WifiOff, Plus } from 'lucide-react';
+import { X, Trash2, Terminal, Wifi, WifiOff, Plus, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 
 const formatBytes = (b: number) => {
@@ -16,13 +18,48 @@ const formatBytes = (b: number) => {
 };
 
 const DevicePanel: React.FC = () => {
-  const { devices, links, selectedDeviceId, setSelectedDeviceId, removeDevice, removeLink, removeInterface, addInterface } = useTopology();
+  const { devices, links, selectedDeviceId, setSelectedDeviceId, removeDevice, removeLink, removeInterface, addInterface, updateDevice, updateInterface } = useTopology();
   const { isAdmin } = useAuth();
   const device = devices.find(d => d.id === selectedDeviceId);
+  const [editing, setEditing] = useState(false);
+  const [editHostname, setEditHostname] = useState('');
+  const [editIp, setEditIp] = useState('');
+  const [editOs, setEditOs] = useState('');
+  const [editingIfaceId, setEditingIfaceId] = useState<string | null>(null);
+  const [editIfaceName, setEditIfaceName] = useState('');
 
   if (!device) return null;
 
   const deviceLinks = links.filter(l => l.sourceDeviceId === device.id || l.targetDeviceId === device.id);
+
+  const startEdit = () => {
+    setEditing(true);
+    setEditHostname(device.hostname);
+    setEditIp(device.ipAddress);
+    setEditOs(device.containerImage || device.os);
+  };
+
+  const saveEdit = () => {
+    updateDevice(device.id, {
+      hostname: editHostname,
+      ipAddress: editIp,
+      os: editOs,
+      ...(device.containerImage ? { containerImage: editOs } : {}),
+    });
+    setEditing(false);
+    toast.success('Device updated');
+  };
+
+  const startIfaceEdit = (ifaceId: string, name: string) => {
+    setEditingIfaceId(ifaceId);
+    setEditIfaceName(name);
+  };
+
+  const saveIfaceEdit = (ifaceId: string) => {
+    updateInterface(device.id, ifaceId, { name: editIfaceName });
+    setEditingIfaceId(null);
+    toast.success('Interface renamed');
+  };
 
   return (
     <div className="w-[380px] h-full glass-panel border-l border-border overflow-y-auto fade-in-up">
@@ -31,11 +68,25 @@ const DevicePanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <DeviceIcon type={device.type} size={24} />
           <div>
-            <h2 className="text-sm font-semibold">{device.hostname}</h2>
+            {editing ? (
+              <Input value={editHostname} onChange={e => setEditHostname(e.target.value)} className="h-7 text-sm font-semibold w-[160px]" />
+            ) : (
+              <h2 className="text-sm font-semibold">{device.hostname}</h2>
+            )}
             <span className="text-xs text-muted-foreground">{deviceTypeLabel[device.type]}</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {isAdmin && !editing && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={startEdit}>
+              <Pencil className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          {isAdmin && editing && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-success" onClick={saveEdit}>
+              <Check className="w-4 h-4" />
+            </Button>
+          )}
           {isAdmin && (
             <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => {
               removeDevice(device.id);
@@ -53,14 +104,39 @@ const DevicePanel: React.FC = () => {
       {/* Info */}
       <div className="p-4 space-y-3">
         <div className="grid grid-cols-2 gap-2 text-xs">
-          <InfoRow label="IP Address" value={device.ipAddress} />
-          {device.macAddress && <InfoRow label="MAC" value={device.macAddress} />}
-          <InfoRow label="OS / Image" value={device.containerImage || device.os} />
+          {editing ? (
+            <>
+              <div>
+                <span className="text-muted-foreground block mb-0.5">IP Address</span>
+                <Input value={editIp} onChange={e => setEditIp(e.target.value)} className="h-7 text-xs font-mono" />
+              </div>
+              <div>
+                <span className="text-muted-foreground block mb-0.5">OS / Image</span>
+                <Input value={editOs} onChange={e => setEditOs(e.target.value)} className="h-7 text-xs font-mono" />
+              </div>
+            </>
+          ) : (
+            <>
+              <InfoRow label="IP Address" value={device.ipAddress} />
+              {device.macAddress && <InfoRow label="MAC" value={device.macAddress} />}
+              <InfoRow label="OS / Image" value={device.containerImage || device.os} />
+            </>
+          )}
           <InfoRow label="Uptime" value={device.uptime} />
           <InfoRow label="Status" value={
-            <Badge variant={device.status === 'up' ? 'default' : 'destructive'} className="text-[10px] h-5">
-              {device.status.toUpperCase()}
-            </Badge>
+            isAdmin ? (
+              <Select value={device.status} onValueChange={(v) => updateDevice(device.id, { status: v as 'up' | 'down' })}>
+                <SelectTrigger className="h-6 w-[70px] text-[10px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="up">UP</SelectItem>
+                  <SelectItem value="down">DOWN</SelectItem>
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge variant={device.status === 'up' ? 'default' : 'destructive'} className="text-[10px] h-5">
+                {device.status.toUpperCase()}
+              </Badge>
+            )
           } />
         </div>
 
@@ -115,15 +191,50 @@ const DevicePanel: React.FC = () => {
               const connectedLink = deviceLinks.find(
                 l => l.sourceInterfaceId === iface.id || l.targetInterfaceId === iface.id
               );
+              const isEditingThis = editingIfaceId === iface.id;
               return (
                 <div key={iface.id} className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-secondary/50 text-xs group">
-                  <div className={`status-dot ${iface.status === 'up' ? 'status-up' : 'status-down'}`} />
-                  <span className="font-mono font-medium flex-1">{iface.name}</span>
-                  <span className="text-muted-foreground">{iface.speed}</span>
+                  {isAdmin && (
+                    <Select value={iface.status} onValueChange={(v) => updateInterface(device.id, iface.id, { status: v as 'up' | 'down' })}>
+                      <SelectTrigger className="h-5 w-5 p-0 border-0 bg-transparent [&>svg]:hidden">
+                        <div className={`status-dot ${iface.status === 'up' ? 'status-up' : 'status-down'}`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="up">Up</SelectItem>
+                        <SelectItem value="down">Down</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {!isAdmin && <div className={`status-dot ${iface.status === 'up' ? 'status-up' : 'status-down'}`} />}
+
+                  {isEditingThis ? (
+                    <div className="flex items-center gap-1 flex-1">
+                      <Input value={editIfaceName} onChange={e => setEditIfaceName(e.target.value)} className="h-5 text-xs font-mono px-1 flex-1" />
+                      <button onClick={() => saveIfaceEdit(iface.id)} className="text-success"><Check className="w-3 h-3" /></button>
+                    </div>
+                  ) : (
+                    <span className="font-mono font-medium flex-1 cursor-pointer" onDoubleClick={() => isAdmin && startIfaceEdit(iface.id, iface.name)}>
+                      {iface.name}
+                    </span>
+                  )}
+
+                  {isAdmin && (
+                    <Select value={iface.speed} onValueChange={(v) => updateInterface(device.id, iface.id, { speed: v as any })}>
+                      <SelectTrigger className="h-5 text-[10px] w-[55px] px-1"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="100M">100M</SelectItem>
+                        <SelectItem value="1G">1G</SelectItem>
+                        <SelectItem value="10G">10G</SelectItem>
+                        <SelectItem value="40G">40G</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                  {!isAdmin && <span className="text-muted-foreground">{iface.speed}</span>}
+
                   {connectedLink && (
                     <button
                       onClick={() => isAdmin && removeLink(connectedLink.id)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                      className={`transition-opacity text-destructive ${isAdmin ? 'opacity-0 group-hover:opacity-100' : 'opacity-30'}`}
                       title="Disconnect"
                     >
                       <WifiOff className="w-3 h-3" />

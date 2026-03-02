@@ -1,7 +1,8 @@
 import React from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus } from 'lucide-react';
+import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ interface DashboardBarProps {
 }
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory }) => {
+  const navigate = useNavigate();
   const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice } = useTopology();
   const { user, logout, isAdmin } = useAuth();
 
@@ -60,6 +62,11 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         <Network className="w-5 h-5 text-primary" />
         <span className="text-sm font-bold tracking-tight">NetScope</span>
       </div>
+
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => navigate('/dashboard')}>
+        <BarChart3 className="w-3.5 h-3.5" />
+        Dashboard
+      </Button>
 
       <Separator orientation="vertical" className="h-6" />
 

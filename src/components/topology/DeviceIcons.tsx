@@ -4,8 +4,8 @@ import { Monitor, Server, Shield, Layers, Box, Hexagon } from 'lucide-react';
 
 const iconMap: Record<DeviceType, { icon: React.ElementType; className: string }> = {
   switch: { icon: Layers, className: 'text-noc-network' },
-  router: { icon: () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-noc-network">
+  router: { icon: ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 3v18M3 12h18" />
       <path d="m8 8 4 4 4-4M16 16l-4-4-4 4" />
