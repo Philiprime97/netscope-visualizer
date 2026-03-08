@@ -21,14 +21,10 @@ const DeviceNode: React.FC<NodeProps> = ({ data, selected }) => {
 
   return (
     <div className={`device-node min-w-[100px] ${categoryBorder} ${selected ? 'selected' : ''}`}>
-      <Handle type="source" position={Position.Top} id="top-source" className="!-top-1.5" />
-      <Handle type="target" position={Position.Top} id="top-target" className="!-top-1.5" />
-      <Handle type="source" position={Position.Bottom} id="bottom-source" className="!-bottom-1.5" />
-      <Handle type="target" position={Position.Bottom} id="bottom-target" className="!-bottom-1.5" />
-      <Handle type="source" position={Position.Left} id="left-source" className="!-left-1.5" />
-      <Handle type="target" position={Position.Left} id="left-target" className="!-left-1.5" />
-      <Handle type="source" position={Position.Right} id="right-source" className="!-right-1.5" />
-      <Handle type="target" position={Position.Right} id="right-target" className="!-right-1.5" />
+      <Handle type="source" position={Position.Top} id="top" isConnectableEnd className="!-top-1.5" />
+      <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd className="!-bottom-1.5" />
+      <Handle type="source" position={Position.Left} id="left" isConnectableEnd className="!-left-1.5" />
+      <Handle type="source" position={Position.Right} id="right" isConnectableEnd className="!-right-1.5" />
 
       <div className="flex flex-col items-center gap-1.5">
         <div className="relative">
