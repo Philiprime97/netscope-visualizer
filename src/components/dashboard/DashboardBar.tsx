@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen } from 'lucide-react';
