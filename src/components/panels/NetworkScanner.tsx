@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { scanSubnet, DiscoveredHost } from '@/services/pingAgent';
 import { useTopology } from '@/contexts/TopologyContext';
-import { NetworkDevice, DeviceType } from '@/types/network';
+import { NetworkDevice, DeviceType, DeviceInterface } from '@/types/network';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Radar, Loader2, Plus, Check, Monitor, Server, Shield, Layers, Hexagon } from 'lucide-react';
+import { Radar, Loader2, Plus, Check, ChevronDown, ChevronRight, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeviceIcon } from '@/components/topology/DeviceIcons';
 
 const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { devices, addDevice } = useTopology();
   const [subnet, setSubnet] = useState('192.168.1.0/24');
+  const [community, setCommunity] = useState('');
   const [scanning, setScanning] = useState(false);
   const [hosts, setHosts] = useState<DiscoveredHost[]>([]);
   const [added, setAdded] = useState<Set<string>>(new Set());
@@ -20,23 +21,34 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
   const existingIps = new Set(devices.map(d => d.ipAddress));
 
+  const speedToLinkSpeed = (speed: string): '100M' | '1G' | '10G' | '40G' => {
+    if (speed.includes('10G') || speed.includes('10000')) return '10G';
+    if (speed.includes('40G') || speed.includes('40000')) return '40G';
+    if (speed.includes('1G') || speed.includes('1000')) return '1G';
+    return '100M';
+  };
+
   const createDevice = (host: DiscoveredHost): NetworkDevice => {
     const type = (['switch', 'router', 'firewall', 'server', 'pc', 'docker', 'kubernetes'].includes(host.deviceType)
       ? host.deviceType : 'pc') as DeviceType;
     const category = type === 'switch' || type === 'router' || type === 'firewall' ? 'network' :
                      type === 'docker' || type === 'kubernetes' ? 'container' : 'endpoint';
-    return {
-      id: `discovered-${Date.now()}-${host.ip.replace(/\./g, '-')}`,
-      hostname: host.hostname,
-      type,
-      category,
-      ipAddress: host.ip,
-      os: host.description,
-      uptime: '0d 0h',
-      cpu: 0,
-      memory: 0,
-      status: 'up',
-      interfaces: [{
+
+    // Build interfaces from SNMP data if available
+    let interfaces: DeviceInterface[];
+    if (host.snmpInterfaces && host.snmpInterfaces.length > 0) {
+      interfaces = host.snmpInterfaces.map((si, idx) => ({
+        id: `${host.ip.replace(/\./g, '-')}-${si.name.replace(/[\/\s]/g, '-')}-${idx}`,
+        name: si.name,
+        type: 'ethernet' as const,
+        speed: speedToLinkSpeed(si.speed),
+        status: si.operStatus as 'up' | 'down',
+        rxBytes: 0,
+        txBytes: 0,
+        enabled: si.adminStatus === 'up',
+      }));
+    } else {
+      interfaces = [{
         id: `${host.ip.replace(/\./g, '-')}-eth0`,
         name: 'eth0',
         type: 'ethernet',
@@ -45,8 +57,26 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         rxBytes: 0,
         txBytes: 0,
         enabled: true,
-      }],
-      maxConnections: 4,
+      }];
+    }
+
+    const osDescription = host.snmp?.sysDescr
+      ? host.snmp.sysDescr.substring(0, 80)
+      : host.description;
+
+    return {
+      id: `discovered-${Date.now()}-${host.ip.replace(/\./g, '-')}`,
+      hostname: host.hostname,
+      type,
+      category,
+      ipAddress: host.ip,
+      os: osDescription,
+      uptime: host.snmp?.sysUpTime || '0d 0h',
+      cpu: 0,
+      memory: 0,
+      status: 'up',
+      interfaces,
+      maxConnections: Math.max(4, interfaces.length),
     };
   };
 
@@ -54,8 +84,8 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setScanning(true);
     setHosts([]);
     setAdded(new Set());
-    toast.info('Scanning network... This may take a while.');
-    const result = await scanSubnet(subnet);
+    toast.info(`Scanning ${subnet}${community ? ' with SNMP' : ''}...`);
+    const result = await scanSubnet(subnet, community || undefined);
 
     if (result.alive.length === 0) {
       toast.error('No hosts found. Is the agent running on port 5111?');
@@ -85,7 +115,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         toast.success(`Found ${discoveredHosts.length} hosts — all already in topology`);
       }
     } else {
-      toast.success(`Found ${discoveredHosts.length} hosts`);
+      toast.success(`Found ${discoveredHosts.length} hosts${result.snmpEnabled ? ' (SNMP enabled)' : ''}`);
     }
 
     setScanning(false);
@@ -116,7 +146,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const knownHosts = hosts.filter(h => existingIps.has(h.ip));
 
   return (
-    <div className="w-[400px] h-full border-l border-border bg-background overflow-y-auto fade-in-up">
+    <div className="w-[420px] h-full border-l border-border bg-background overflow-y-auto fade-in-up">
       <div className="p-4 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-2">
           <Radar className="w-4 h-4 text-primary" />
@@ -142,6 +172,19 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-xs text-muted-foreground">SNMP Community String (optional)</label>
+          <Input
+            value={community}
+            onChange={e => setCommunity(e.target.value)}
+            placeholder="public"
+            className="h-8 text-xs font-mono"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Enables vendor, model, OS, and interface discovery via SNMP v2c. Requires <span className="font-mono">pysnmp</span>.
+          </p>
+        </div>
+
         <div className="flex items-center gap-2">
           <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
             <input
@@ -155,16 +198,16 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         </div>
 
         <p className="text-[10px] text-muted-foreground">
-          Requires the Python agent on <span className="font-mono">localhost:5111</span>.
-          The agent resolves hostnames, checks ports, and identifies device types.
+          Requires the Python agent on <span className="font-mono">localhost:5111</span>
         </p>
 
         {hosts.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Badge variant="secondary" className="text-[10px]">{hosts.length} hosts</Badge>
               {newHosts.length > 0 && <Badge className="text-[10px]">{newHosts.length} new</Badge>}
               {knownHosts.length > 0 && <Badge variant="outline" className="text-[10px]">{knownHosts.length} known</Badge>}
+              {hosts.some(h => h.snmp) && <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">SNMP</Badge>}
               {newHosts.filter(h => !added.has(h.ip)).length > 0 && (
                 <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1 ml-auto" onClick={handleAddAll}>
                   <Plus className="w-3 h-3" /> Add All New
@@ -172,7 +215,6 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               )}
             </div>
 
-            {/* New Devices */}
             {newHosts.length > 0 && (
               <div className="space-y-1.5">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Discovered Devices</h3>
@@ -187,7 +229,6 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </div>
             )}
 
-            {/* Known Devices */}
             {knownHosts.length > 0 && (
               <div className="space-y-1.5">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Already in Topology</h3>
@@ -209,8 +250,11 @@ const HostCard: React.FC<{
   isKnown?: boolean;
   onAdd?: () => void;
 }> = ({ host, isAdded, isKnown, onAdd }) => {
+  const [expanded, setExpanded] = useState(false);
   const deviceType = (['switch', 'router', 'firewall', 'server', 'pc', 'docker', 'kubernetes'].includes(host.deviceType)
     ? host.deviceType : 'pc') as DeviceType;
+
+  const hasDetails = host.snmp || (host.snmpInterfaces && host.snmpInterfaces.length > 0);
 
   return (
     <Card className="p-2.5 space-y-1.5">
@@ -219,19 +263,25 @@ const HostCard: React.FC<{
           <DeviceIcon type={deviceType} size={18} />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-semibold truncate">{host.hostname}</span>
             <Badge variant="outline" className="text-[9px] h-4 shrink-0">{host.description}</Badge>
           </div>
-          <span className="text-[10px] font-mono text-muted-foreground">{host.ip}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-muted-foreground">{host.ip}</span>
+            {host.vendor && (
+              <Badge variant="secondary" className="text-[9px] h-4">{host.vendor}{host.model ? ` ${host.model}` : ''}</Badge>
+            )}
+          </div>
         </div>
-        <div className="shrink-0">
-          {isKnown && (
-            <Badge variant="secondary" className="text-[10px]">Exists</Badge>
+        <div className="shrink-0 flex items-center gap-1">
+          {hasDetails && (
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setExpanded(!expanded)}>
+              {expanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            </Button>
           )}
-          {isAdded && (
-            <Badge variant="outline" className="text-[10px] gap-1"><Check className="w-3 h-3" /> Added</Badge>
-          )}
+          {isKnown && <Badge variant="secondary" className="text-[10px]">Exists</Badge>}
+          {isAdded && <Badge variant="outline" className="text-[10px] gap-1"><Check className="w-3 h-3" /> Added</Badge>}
           {!isKnown && !isAdded && onAdd && (
             <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={onAdd}>
               <Plus className="w-3 h-3" /> Add
@@ -239,6 +289,8 @@ const HostCard: React.FC<{
           )}
         </div>
       </div>
+
+      {/* Ports */}
       {host.ports && host.ports.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {host.ports.map(p => (
@@ -246,6 +298,60 @@ const HostCard: React.FC<{
               {p.port}/{p.service}
             </Badge>
           ))}
+        </div>
+      )}
+
+      {/* Expanded SNMP details */}
+      {expanded && hasDetails && (
+        <div className="pt-1.5 border-t border-border space-y-2">
+          {host.snmp && (
+            <div className="space-y-1 text-[10px]">
+              {host.snmp.sysDescr && (
+                <div>
+                  <span className="text-muted-foreground">OS/Description: </span>
+                  <span className="font-mono text-foreground">{host.snmp.sysDescr.substring(0, 120)}</span>
+                </div>
+              )}
+              {host.snmp.sysLocation && (
+                <div>
+                  <span className="text-muted-foreground">Location: </span>
+                  <span className="font-mono text-foreground">{host.snmp.sysLocation}</span>
+                </div>
+              )}
+              {host.snmp.sysContact && (
+                <div>
+                  <span className="text-muted-foreground">Contact: </span>
+                  <span className="font-mono text-foreground">{host.snmp.sysContact}</span>
+                </div>
+              )}
+              {host.snmp.sysUpTime && (
+                <div>
+                  <span className="text-muted-foreground">Uptime: </span>
+                  <span className="font-mono text-foreground">{host.snmp.sysUpTime}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {host.snmpInterfaces && host.snmpInterfaces.length > 0 && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                Interfaces ({host.snmpInterfaces.length})
+              </span>
+              <div className="max-h-32 overflow-y-auto space-y-0.5">
+                {host.snmpInterfaces.map((iface, idx) => (
+                  <div key={idx} className="flex items-center gap-2 px-1.5 py-0.5 rounded bg-secondary/40 text-[10px]">
+                    <div className={`w-1.5 h-1.5 rounded-full ${iface.operStatus === 'up' ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className="font-mono flex-1 truncate">{iface.name}</span>
+                    <span className="text-muted-foreground">{iface.speed}</span>
+                    <span className={`${iface.operStatus === 'up' ? 'text-green-400' : 'text-red-400'}`}>
+                      {iface.operStatus}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </Card>
