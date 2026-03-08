@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Radar, Loader2, Plus, Check, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Radar, Loader2, Plus, Check, ChevronDown, ChevronRight, Info, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeviceIcon } from '@/components/topology/DeviceIcons';
 
