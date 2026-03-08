@@ -156,3 +156,62 @@ export const checkAgentHealth = async (): Promise<{ ok: boolean; snmp?: boolean 
     return { ok: false };
   }
 };
+
+export interface SnmpTopologyNeighbor {
+  protocol: string;
+  remoteDevice: string;
+  remotePort: string;
+  localPort: string;
+  localPortIndex?: number;
+  remotePortDesc?: string;
+  platform?: string;
+}
+
+export interface SnmpTopologyDevice {
+  ip: string;
+  hostname: string;
+  deviceType: string;
+  description: string;
+  snmpReachable: boolean;
+  system?: SnmpSystemInfo;
+  interfaces?: SnmpInterface[];
+  neighbors?: SnmpTopologyNeighbor[];
+  vendor?: string | null;
+  model?: string | null;
+}
+
+export interface SnmpTopologyLink {
+  sourceIp: string;
+  sourceHostname: string;
+  sourcePort: string;
+  targetIp: string;
+  targetHostname: string;
+  targetPort: string;
+  protocol: string;
+}
+
+export interface SnmpTopologyResult {
+  devices: SnmpTopologyDevice[];
+  links: SnmpTopologyLink[];
+  subnet: string;
+  deviceCount: number;
+  linkCount: number;
+  error?: string;
+}
+
+export const discoverSnmpTopology = async (subnet: string, community: string): Promise<SnmpTopologyResult> => {
+  try {
+    const res = await fetch(`${AGENT_URL}/snmp-topology`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subnet, community }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { devices: [], links: [], subnet, deviceCount: 0, linkCount: 0, error: data.error || 'Agent error' };
+    }
+    return await res.json();
+  } catch {
+    return { devices: [], links: [], subnet, deviceCount: 0, linkCount: 0, error: 'Agent not running on port 5111' };
+  }
+};
