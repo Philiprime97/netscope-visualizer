@@ -13,14 +13,25 @@ const DeviceNode: React.FC<NodeProps> = ({ data, selected }) => {
   const device = (data as DeviceNodeData).device;
   const { showLabels } = useTopology();
 
-  const categoryBorder = {
-    network: 'border-noc-network/30',
-    endpoint: 'border-noc-endpoint/30',
-    container: 'border-noc-container/30',
-  }[device.category];
+  const customColor = device.customColor;
+
+  const borderStyle = customColor
+    ? { borderColor: `${customColor}4D` } // 30% opacity hex
+    : undefined;
+
+  const categoryBorder = customColor
+    ? ''
+    : {
+        network: 'border-noc-network/30',
+        endpoint: 'border-noc-endpoint/30',
+        container: 'border-noc-container/30',
+      }[device.category] || '';
 
   return (
-    <div className={`device-node min-w-[100px] ${categoryBorder} ${selected ? 'selected' : ''}`}>
+    <div
+      className={`device-node min-w-[100px] ${categoryBorder} ${selected ? 'selected' : ''}`}
+      style={borderStyle}
+    >
       <Handle type="source" position={Position.Top} id="top" isConnectableEnd className="!-top-1.5" />
       <Handle type="source" position={Position.Bottom} id="bottom" isConnectableEnd className="!-bottom-1.5" />
       <Handle type="source" position={Position.Left} id="left" isConnectableEnd className="!-left-1.5" />
