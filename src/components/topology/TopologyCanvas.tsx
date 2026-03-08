@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -22,15 +22,21 @@ import { toast } from 'sonner';
 
 const nodeTypes = { device: DeviceNode };
 
+type PendingConnection = {
+  sourceId: string;
+  targetId: string;
+  sourceHandle?: string | null;
+  targetHandle?: string | null;
+};
+
 const TopologyCanvas: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
     setSelectedDeviceId, setSelectedLinkId,
-    updatePosition, addLink, removeLink, getConnectionCount,
+    updatePosition, addLink, removeLink,
   } = useTopology();
 
-  // Connection dialog state
-  const [pendingConnection, setPendingConnection] = useState<{ sourceId: string; targetId: string } | null>(null);
+  const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null);
 
   const nodes: Node[] = useMemo(() =>
     devices.map(device => ({
@@ -48,29 +54,13 @@ const TopologyCanvas: React.FC = () => {
       const tgtDevice = devices.find(d => d.id === link.targetDeviceId);
       const srcIf = srcDevice?.interfaces.find(i => i.id === link.sourceInterfaceId);
       const tgtIf = tgtDevice?.interfaces.find(i => i.id === link.targetInterfaceId);
-      
-      // Determine best handle based on relative positions
-      const srcPos = positions[link.sourceDeviceId] || { x: 0, y: 0 };
-      const tgtPos = positions[link.targetDeviceId] || { x: 0, y: 0 };
-      const dx = tgtPos.x - srcPos.x;
-      const dy = tgtPos.y - srcPos.y;
-      
-      let sourceHandle = 'bottom';
-      let targetHandle = 'top';
-      if (Math.abs(dx) > Math.abs(dy)) {
-        sourceHandle = dx > 0 ? 'right' : 'left';
-        targetHandle = dx > 0 ? 'left' : 'right';
-      } else {
-        sourceHandle = dy > 0 ? 'bottom' : 'top';
-        targetHandle = dy > 0 ? 'top' : 'bottom';
-      }
 
       return {
         id: link.id,
         source: link.sourceDeviceId,
         target: link.targetDeviceId,
-        sourceHandle,
-        targetHandle,
+        sourceHandle: link.sourceHandle,
+        targetHandle: link.targetHandle,
         animated: showAnimations && link.status === 'up',
         label: showLabels ? `${srcIf?.name || '?'} ↔ ${tgtIf?.name || '?'}` : undefined,
         labelStyle: { fill: 'hsl(215, 15%, 50%)', fontSize: 10, fontFamily: 'JetBrains Mono' },
@@ -85,7 +75,7 @@ const TopologyCanvas: React.FC = () => {
         data: { link },
       };
     }),
-    [links, devices, showAnimations, showLabels, positions]
+    [links, devices, showAnimations, showLabels]
   );
 
   const [localNodes, setLocalNodes] = React.useState<Node[]>(nodes);
@@ -105,7 +95,6 @@ const TopologyCanvas: React.FC = () => {
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     setLocalEdges(eds => applyEdgeChanges(changes, eds));
-    // Handle edge removal via Delete key
     changes.forEach(change => {
       if (change.type === 'remove') {
         removeLink(change.id);
@@ -121,22 +110,30 @@ const TopologyCanvas: React.FC = () => {
     const tgtDevice = devices.find(d => d.id === connection.target);
     if (!srcDevice || !tgtDevice) return;
 
-    // Open interface picker dialog
-    setPendingConnection({ sourceId: connection.source, targetId: connection.target });
-  }, [devices, getConnectionCount]);
+    setPendingConnection({
+      sourceId: connection.source,
+      targetId: connection.target,
+      sourceHandle: connection.sourceHandle,
+      targetHandle: connection.targetHandle,
+    });
+  }, [devices]);
 
   const handleConnectionConfirm = useCallback((srcIfaceId: string, tgtIfaceId: string) => {
     if (!pendingConnection) return;
+
     const newLink: NetworkLink = {
       id: `link-${Date.now()}`,
       sourceDeviceId: pendingConnection.sourceId,
       sourceInterfaceId: srcIfaceId,
       targetDeviceId: pendingConnection.targetId,
       targetInterfaceId: tgtIfaceId,
+      sourceHandle: pendingConnection.sourceHandle ?? undefined,
+      targetHandle: pendingConnection.targetHandle ?? undefined,
       speed: '1G',
       linkType: 'access',
       status: 'up',
     };
+
     addLink(newLink);
     toast.success('Connection created');
     setPendingConnection(null);
@@ -157,7 +154,6 @@ const TopologyCanvas: React.FC = () => {
     setSelectedLinkId(null);
   }, [setSelectedDeviceId, setSelectedLinkId]);
 
-  // Get used interface IDs for connection dialog
   const pendingSrcDevice = pendingConnection ? devices.find(d => d.id === pendingConnection.sourceId) : null;
   const pendingTgtDevice = pendingConnection ? devices.find(d => d.id === pendingConnection.targetId) : null;
   const usedSrcIfaceIds = pendingConnection
@@ -203,7 +199,6 @@ const TopologyCanvas: React.FC = () => {
         />
       </ReactFlow>
 
-      {/* Connection interface picker dialog */}
       {pendingSrcDevice && pendingTgtDevice && (
         <ConnectionDialog
           open={!!pendingConnection}
