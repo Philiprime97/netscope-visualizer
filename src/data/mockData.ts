@@ -26,155 +26,155 @@ export const mockDevices: NetworkDevice[] = [
   {
     id: 'core-sw1', hostname: 'Core-SW1', type: 'switch', category: 'network',
     ipAddress: '10.0.0.1', macAddress: 'AA:BB:CC:00:01:01', os: 'Cisco IOS 15.2',
-    uptime: '142d 3h', cpu: 35, memory: 48, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '142d 3h', cpu: 35, memory: 48, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('core-sw1', [
       makeIf('core-sw1-gi01', 'Gi0/1', 'gigabit', '10G', 'up', undefined, undefined, 100),
       makeIf('core-sw1-gi02', 'Gi0/2', 'gigabit', '10G', 'up', undefined, undefined, 100),
       makeIf('core-sw1-gi03', 'Gi0/3', 'gigabit', '1G', 'up', undefined, undefined, 200),
       makeIf('core-sw1-gi04', 'Gi0/4', 'gigabit', '1G', 'up'),
-    ],
+    ], 'Gi0/'),
   },
   {
     id: 'core-rtr1', hostname: 'Core-RTR1', type: 'router', category: 'network',
     ipAddress: '10.0.0.254', macAddress: 'AA:BB:CC:00:02:01', os: 'Cisco IOS-XE 17.6',
-    uptime: '89d 12h', cpu: 22, memory: 41, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '89d 12h', cpu: 22, memory: 41, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('core-rtr1', [
       makeIf('core-rtr1-gi01', 'Gi0/0/0', 'gigabit', '10G', 'up', '10.0.0.254'),
       makeIf('core-rtr1-gi02', 'Gi0/0/1', 'gigabit', '1G', 'up', '192.168.1.1'),
       makeIf('core-rtr1-gi03', 'Gi0/0/2', 'gigabit', '1G', 'up'),
       makeIf('core-rtr1-gi04', 'Gi0/0/3', 'gigabit', '1G', 'down'),
-    ],
+    ], 'Gi0/0/'),
   },
   {
     id: 'fw1', hostname: 'FW-Edge', type: 'firewall', category: 'network',
     ipAddress: '10.0.0.253', macAddress: 'AA:BB:CC:00:03:01', os: 'Palo Alto PAN-OS 11.0',
-    uptime: '230d 5h', cpu: 18, memory: 52, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '230d 5h', cpu: 18, memory: 52, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('fw1', [
       makeIf('fw1-eth1', 'eth1/1', 'gigabit', '10G', 'up', '10.0.0.253'),
       makeIf('fw1-eth2', 'eth1/2', 'gigabit', '1G', 'up', '203.0.113.1'),
       makeIf('fw1-eth3', 'eth1/3', 'gigabit', '1G', 'down'),
       makeIf('fw1-eth4', 'eth1/4', 'gigabit', '1G', 'up'),
-    ],
+    ], 'eth1/'),
   },
   {
     id: 'acc-sw1', hostname: 'Access-SW1', type: 'switch', category: 'network',
     ipAddress: '10.0.1.1', macAddress: 'AA:BB:CC:00:04:01', os: 'Cisco IOS 15.2',
-    uptime: '67d 8h', cpu: 28, memory: 35, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '67d 8h', cpu: 28, memory: 35, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('acc-sw1', [
       makeIf('acc-sw1-gi01', 'Gi0/1', 'gigabit', '10G', 'up', undefined, undefined, 100),
       makeIf('acc-sw1-fa01', 'Fa0/1', 'fastethernet', '100M', 'up', undefined, undefined, 10),
       makeIf('acc-sw1-fa02', 'Fa0/2', 'fastethernet', '100M', 'up', undefined, undefined, 10),
       makeIf('acc-sw1-fa03', 'Fa0/3', 'fastethernet', '100M', 'down'),
-    ],
+    ], 'Fa0/'),
   },
   {
     id: 'acc-sw2', hostname: 'Access-SW2', type: 'switch', category: 'network',
     ipAddress: '10.0.2.1', macAddress: 'AA:BB:CC:00:05:01', os: 'Cisco IOS 15.2',
-    uptime: '67d 8h', cpu: 31, memory: 38, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '67d 8h', cpu: 31, memory: 38, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('acc-sw2', [
       makeIf('acc-sw2-gi01', 'Gi0/1', 'gigabit', '10G', 'up', undefined, undefined, 100),
       makeIf('acc-sw2-fa01', 'Fa0/1', 'fastethernet', '100M', 'up', undefined, undefined, 20),
       makeIf('acc-sw2-fa02', 'Fa0/2', 'fastethernet', '100M', 'up', undefined, undefined, 20),
       makeIf('acc-sw2-fa03', 'Fa0/3', 'fastethernet', '100M', 'up'),
-    ],
+    ], 'Fa0/'),
   },
   {
     id: 'srv1', hostname: 'SRV-Docker01', type: 'server', category: 'endpoint',
     ipAddress: '10.0.1.10', macAddress: 'AA:BB:CC:00:06:01', os: 'Ubuntu 22.04 LTS',
-    uptime: '45d 2h', cpu: 62, memory: 71, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '45d 2h', cpu: 62, memory: 71, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('srv1', [
       makeIf('srv1-ens33', 'ens33', 'ethernet', '1G', 'up', '10.0.1.10'),
       makeIf('srv1-docker0', 'docker0', 'bridge', '1G', 'up', '172.17.0.1'),
       makeIf('srv1-ens34', 'ens34', 'ethernet', '1G', 'down'),
       makeIf('srv1-lo', 'lo', 'loopback', '1G', 'up', '127.0.0.1'),
-    ],
+    ], 'eth'),
   },
   {
     id: 'srv2', hostname: 'SRV-K8s-Master', type: 'server', category: 'endpoint',
     ipAddress: '10.0.2.10', macAddress: 'AA:BB:CC:00:07:01', os: 'Ubuntu 22.04 LTS',
-    uptime: '90d 14h', cpu: 45, memory: 58, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '90d 14h', cpu: 45, memory: 58, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('srv2', [
       makeIf('srv2-ens33', 'ens33', 'ethernet', '1G', 'up', '10.0.2.10'),
       makeIf('srv2-cni0', 'cni0', 'bridge', '1G', 'up', '10.244.0.1'),
       makeIf('srv2-ens34', 'ens34', 'ethernet', '1G', 'up'),
       makeIf('srv2-lo', 'lo', 'loopback', '1G', 'up', '127.0.0.1'),
-    ],
+    ], 'eth'),
   },
   {
     id: 'pc1', hostname: 'WS-Admin01', type: 'pc', category: 'endpoint',
     ipAddress: '10.0.1.100', macAddress: 'AA:BB:CC:00:08:01', os: 'Windows 11 Pro',
-    uptime: '3d 7h', cpu: 15, memory: 45, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '3d 7h', cpu: 15, memory: 45, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('pc1', [
       makeIf('pc1-eth0', 'Ethernet', 'ethernet', '1G', 'up', '10.0.1.100'),
-    ],
+    ], 'Ethernet'),
   },
   {
     id: 'pc2', hostname: 'WS-Dev01', type: 'pc', category: 'endpoint',
     ipAddress: '10.0.1.101', macAddress: 'AA:BB:CC:00:09:01', os: 'macOS Sonoma',
-    uptime: '1d 12h', cpu: 32, memory: 67, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '1d 12h', cpu: 32, memory: 67, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('pc2', [
       makeIf('pc2-eth0', 'en0', 'ethernet', '1G', 'up', '10.0.1.101'),
-    ],
+    ], 'en'),
   },
   {
     id: 'pc3', hostname: 'WS-User01', type: 'pc', category: 'endpoint',
     ipAddress: '10.0.2.100', macAddress: 'AA:BB:CC:00:10:01', os: 'Windows 10',
-    uptime: '5d 1h', cpu: 8, memory: 35, status: 'up', maxConnections: 4,
-    interfaces: [
+    uptime: '5d 1h', cpu: 8, memory: 35, status: 'up', maxConnections: 999,
+    interfaces: padInterfaces('pc3', [
       makeIf('pc3-eth0', 'Ethernet', 'ethernet', '1G', 'up', '10.0.2.100'),
-    ],
+    ], 'Ethernet'),
   },
   // Docker containers
   {
     id: 'docker1', hostname: 'nginx-proxy', type: 'docker', category: 'container',
     ipAddress: '172.17.0.2', os: 'nginx:1.25-alpine', containerImage: 'nginx:1.25-alpine',
-    uptime: '12d 4h', cpu: 5, memory: 12, status: 'up', maxConnections: 4, parentServerId: 'srv1',
-    interfaces: [
+    uptime: '12d 4h', cpu: 5, memory: 12, status: 'up', maxConnections: 999, parentServerId: 'srv1',
+    interfaces: padInterfaces('docker1', [
       makeIf('docker1-eth0', 'eth0', 'virtual', '1G', 'up', '172.17.0.2'),
       makeIf('docker1-veth1', 'veth1a2b3c', 'virtual', '1G', 'up'),
-    ],
+    ], 'veth', 'virtual'),
   },
   {
     id: 'docker2', hostname: 'api-gateway', type: 'docker', category: 'container',
     ipAddress: '172.17.0.3', os: 'node:20-slim', containerImage: 'node:20-slim',
-    uptime: '12d 4h', cpu: 18, memory: 28, status: 'up', maxConnections: 4, parentServerId: 'srv1',
-    interfaces: [
+    uptime: '12d 4h', cpu: 18, memory: 28, status: 'up', maxConnections: 999, parentServerId: 'srv1',
+    interfaces: padInterfaces('docker2', [
       makeIf('docker2-eth0', 'eth0', 'virtual', '1G', 'up', '172.17.0.3'),
       makeIf('docker2-veth1', 'veth4d5e6f', 'virtual', '1G', 'up'),
-    ],
+    ], 'veth', 'virtual'),
   },
   {
     id: 'docker3', hostname: 'redis-cache', type: 'docker', category: 'container',
     ipAddress: '172.17.0.4', os: 'redis:7-alpine', containerImage: 'redis:7-alpine',
-    uptime: '12d 4h', cpu: 3, memory: 8, status: 'up', maxConnections: 4, parentServerId: 'srv1',
-    interfaces: [
+    uptime: '12d 4h', cpu: 3, memory: 8, status: 'up', maxConnections: 999, parentServerId: 'srv1',
+    interfaces: padInterfaces('docker3', [
       makeIf('docker3-eth0', 'eth0', 'virtual', '1G', 'up', '172.17.0.4'),
-    ],
+    ], 'veth', 'virtual'),
   },
   // Kubernetes pods
   {
     id: 'k8s-pod1', hostname: 'webapp-frontend-7b5d9', type: 'kubernetes', category: 'container',
     ipAddress: '10.244.0.5', os: 'react:latest', containerImage: 'webapp-frontend:v2.1',
-    uptime: '5d 8h', cpu: 12, memory: 22, status: 'up', maxConnections: 4, parentServerId: 'srv2',
-    interfaces: [
+    uptime: '5d 8h', cpu: 12, memory: 22, status: 'up', maxConnections: 999, parentServerId: 'srv2',
+    interfaces: padInterfaces('k8s-pod1', [
       makeIf('k8s-pod1-eth0', 'eth0', 'virtual', '1G', 'up', '10.244.0.5'),
-    ],
+    ], 'veth', 'virtual'),
   },
   {
     id: 'k8s-pod2', hostname: 'webapp-backend-3c8f2', type: 'kubernetes', category: 'container',
     ipAddress: '10.244.0.6', os: 'go:1.21', containerImage: 'webapp-backend:v3.0',
-    uptime: '5d 8h', cpu: 25, memory: 34, status: 'up', maxConnections: 4, parentServerId: 'srv2',
-    interfaces: [
+    uptime: '5d 8h', cpu: 25, memory: 34, status: 'up', maxConnections: 999, parentServerId: 'srv2',
+    interfaces: padInterfaces('k8s-pod2', [
       makeIf('k8s-pod2-eth0', 'eth0', 'virtual', '1G', 'up', '10.244.0.6'),
-    ],
+    ], 'veth', 'virtual'),
   },
   {
     id: 'k8s-pod3', hostname: 'postgres-db-1a2b3', type: 'kubernetes', category: 'container',
     ipAddress: '10.244.0.7', os: 'postgres:16', containerImage: 'postgres:16-alpine',
-    uptime: '30d 2h', cpu: 38, memory: 55, status: 'up', maxConnections: 4, parentServerId: 'srv2',
-    interfaces: [
+    uptime: '30d 2h', cpu: 38, memory: 55, status: 'up', maxConnections: 999, parentServerId: 'srv2',
+    interfaces: padInterfaces('k8s-pod3', [
       makeIf('k8s-pod3-eth0', 'eth0', 'virtual', '1G', 'up', '10.244.0.7'),
-    ],
+    ], 'veth', 'virtual'),
   },
 ];
 
