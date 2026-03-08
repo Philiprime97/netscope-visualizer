@@ -42,6 +42,7 @@ export interface NetworkDevice {
   customColor?: string;
   latency?: number; // ms from last ping
   uptimeHistory?: { time: string; up: boolean }[];
+  connectors?: number; // number of connection handles (default 4)
 }
 
 export interface NetworkLink {

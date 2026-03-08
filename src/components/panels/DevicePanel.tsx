@@ -162,6 +162,30 @@ const DevicePanel: React.FC = () => {
           } />
         </div>
 
+        {/* Connectors */}
+        {isAdmin && (
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Connectors</span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-6 w-6 text-xs"
+                disabled={(device.connectors ?? 4) <= 1}
+                onClick={() => updateDevice(device.id, { connectors: Math.max(1, (device.connectors ?? 4) - 1) })}
+              >−</Button>
+              <span className="font-mono w-5 text-center">{device.connectors ?? 4}</span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-6 w-6 text-xs"
+                disabled={(device.connectors ?? 4) >= 12}
+                onClick={() => updateDevice(device.id, { connectors: Math.min(12, (device.connectors ?? 4) + 1) })}
+              >+</Button>
+            </div>
+          </div>
+        )}
+
         <Separator />
 
         {/* Resource usage */}
