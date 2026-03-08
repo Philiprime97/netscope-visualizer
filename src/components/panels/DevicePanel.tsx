@@ -70,7 +70,7 @@ const DevicePanel: React.FC = () => {
       {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-3">
-          <DeviceIcon type={device.type} size={24} />
+          <DeviceIcon type={device.type} size={24} customIcon={device.customIcon} customColor={device.customColor} />
           <div>
             {editing ? (
               <Input value={editHostname} onChange={e => setEditHostname(e.target.value)} className="h-7 text-sm font-semibold w-[160px]" />
