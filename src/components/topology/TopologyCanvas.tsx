@@ -42,7 +42,7 @@ const TopologyCanvasInner: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
     setSelectedDeviceId, setSelectedLinkId,
-    updatePosition, addLink, removeLink, addDevice,
+    updatePosition, addLink, removeLink, removeDevice, addDevice,
   } = useTopology();
 
   const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null);
