@@ -92,6 +92,7 @@ const Dashboard: React.FC = () => {
   const tooltipStyle = {
     contentStyle: { background: 'hsl(220, 18%, 10%)', border: '1px solid hsl(220, 15%, 18%)', borderRadius: 8, fontSize: 12 },
     labelStyle: { color: 'hsl(200, 20%, 90%)' },
+    itemStyle: { color: 'hsl(200, 20%, 85%)' },
   };
 
   return (
