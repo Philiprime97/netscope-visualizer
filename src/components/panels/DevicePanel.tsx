@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DeviceIcon, deviceTypeLabel } from '@/components/topology/DeviceIcons';
-import { X, Trash2, Terminal, Wifi, WifiOff, Plus, Pencil, Check } from 'lucide-react';
+import { X, Trash2, Terminal, Wifi, WifiOff, Plus, Pencil, Check, Loader2, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { usePing } from '@/hooks/usePing';
 
 const formatBytes = (b: number) => {
   if (b > 1e9) return `${(b / 1e9).toFixed(1)} GB`;
@@ -20,6 +21,7 @@ const formatBytes = (b: number) => {
 const DevicePanel: React.FC = () => {
   const { devices, links, selectedDeviceId, setSelectedDeviceId, removeDevice, removeLink, removeInterface, addInterface, updateDevice, updateInterface } = useTopology();
   const { isAdmin } = useAuth();
+  const { results, pinging, ping } = usePing();
   const device = devices.find(d => d.id === selectedDeviceId);
   const [editing, setEditing] = useState(false);
   const [editHostname, setEditHostname] = useState('');
@@ -268,6 +270,40 @@ const DevicePanel: React.FC = () => {
             </div>
           ))}
         </div>
+
+        <Separator />
+
+        {/* Ping */}
+        <Button
+          variant="outline"
+          className="w-full gap-2 text-xs"
+          disabled={pinging[device.ipAddress]}
+          onClick={async () => {
+            const result = await ping(device.ipAddress);
+            if (result.error) {
+              toast.error(result.error);
+            } else if (result.reachable) {
+              toast.success(`${device.ipAddress} is reachable`);
+              updateDevice(device.id, { status: 'up' });
+            } else {
+              toast.error(`${device.ipAddress} is unreachable`);
+              updateDevice(device.id, { status: 'down' });
+            }
+          }}
+        >
+          {pinging[device.ipAddress] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
+          {pinging[device.ipAddress] ? 'Pinging...' : 'Ping Device'}
+        </Button>
+        {results[device.ipAddress] && (
+          <div className={`text-[10px] font-mono p-2 rounded-md ${results[device.ipAddress].reachable ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'}`}>
+            {results[device.ipAddress].reachable ? '✓ Reachable' : '✗ Unreachable'}
+            {results[device.ipAddress].output && (
+              <pre className="mt-1 text-[9px] text-muted-foreground whitespace-pre-wrap max-h-20 overflow-y-auto">
+                {results[device.ipAddress].output}
+              </pre>
+            )}
+          </div>
+        )}
 
         <Separator />
 

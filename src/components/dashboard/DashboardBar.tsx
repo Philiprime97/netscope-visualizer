@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload } from 'lucide-react';
+import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,9 +17,10 @@ interface DashboardBarProps {
   setSearchQuery: (q: string) => void;
   filterCategory: string;
   setFilterCategory: (c: string) => void;
+  onToggleScanner?: () => void;
 }
 
-const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory }) => {
+const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner }) => {
   const navigate = useNavigate();
   const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, exportTopology, loadTopology } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
@@ -117,6 +118,10 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => importRef.current?.click()}>
         <Upload className="w-3.5 h-3.5" />
         Import
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={onToggleScanner}>
+        <Radar className="w-3.5 h-3.5" />
+        Scan
       </Button>
 
       <Separator orientation="vertical" className="h-6" />
