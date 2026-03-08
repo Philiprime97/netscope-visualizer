@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { NetworkDevice, NetworkLink, DeviceInterface } from '@/types/network';
 import { mockDevices, mockLinks, mockPositions } from '@/data/mockData';
 
+export interface SavedTopology {
+  id: string;
+  name: string;
+  savedAt: string;
+  devices: NetworkDevice[];
+  links: NetworkLink[];
+  positions: Record<string, { x: number; y: number }>;
+}
+
 interface TopologyContextValue {
   devices: NetworkDevice[];
   links: NetworkLink[];
@@ -25,6 +34,8 @@ interface TopologyContextValue {
   removeLink: (id: string) => void;
   updateLink: (id: string, updates: Partial<NetworkLink>) => void;
   getConnectionCount: (deviceId: string) => number;
+  exportTopology: () => SavedTopology;
+  loadTopology: (topology: SavedTopology) => void;
 }
 
 const TopologyContext = createContext<TopologyContextValue | null>(null);
