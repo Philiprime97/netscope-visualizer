@@ -26,11 +26,9 @@ const DeviceNode: React.FC<NodeProps> = ({ data, selected }) => {
       <Handle type="source" position={Position.Left} id="left" isConnectableEnd className="!-left-1.5" />
       <Handle type="source" position={Position.Right} id="right" isConnectableEnd className="!-right-1.5" />
 
-      <div className="flex flex-col items-center gap-1.5">
-        <div className="relative">
-          <DeviceIcon type={device.type} size={28} />
-          <div className={`status-dot absolute -bottom-0.5 -right-0.5 ${device.status === 'up' ? 'status-up' : 'status-down'}`} />
-        </div>
+      <div className="flex flex-col items-center gap-1.5 relative">
+        <div className={`status-dot absolute -top-1.5 -right-1.5 z-10 ${device.status === 'up' ? 'status-up' : 'status-down'}`} />
+        <DeviceIcon type={device.type} size={28} />
         <span className="text-[11px] font-semibold text-foreground truncate max-w-[90px]">
           {device.hostname}
         </span>
