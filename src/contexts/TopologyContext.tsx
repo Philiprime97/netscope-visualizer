@@ -115,6 +115,25 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return links.filter(l => l.sourceDeviceId === deviceId || l.targetDeviceId === deviceId).length;
   }, [links]);
 
+  const exportTopology = useCallback((): SavedTopology => {
+    return {
+      id: `topo-${Date.now()}`,
+      name: `Topology ${new Date().toLocaleDateString()}`,
+      savedAt: new Date().toISOString(),
+      devices,
+      links,
+      positions,
+    };
+  }, [devices, links, positions]);
+
+  const loadTopology = useCallback((topology: SavedTopology) => {
+    setDevices(topology.devices);
+    setLinks(topology.links);
+    setPositions(topology.positions);
+    setSelectedDeviceId(null);
+    setSelectedLinkId(null);
+  }, []);
+
   return (
     <TopologyContext.Provider value={{
       devices, links, positions, selectedDeviceId, selectedLinkId,
@@ -123,6 +142,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updatePosition, addDevice, removeDevice, updateDevice,
       updateInterface, addInterface, removeInterface,
       addLink, removeLink, updateLink, getConnectionCount,
+      exportTopology, loadTopology,
     }}>
       {children}
     </TopologyContext.Provider>
