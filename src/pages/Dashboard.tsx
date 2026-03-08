@@ -116,7 +116,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
+      <div className="p-4 md:p-6 space-y-6 w-full">
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <KpiCard icon={<Server className="w-4 h-4" />} label="Devices" value={totalDevices} />
