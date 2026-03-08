@@ -574,6 +574,220 @@ def scan():
     })
 
 
+# ── LLDP / CDP neighbor discovery ────────────────────────────────────
+
+LLDP_REM_TABLE = '1.0.8802.1.1.2.1.4.1.1'  # lldpRemTable
+LLDP_REM_SYS_NAME  = '1.0.8802.1.1.2.1.4.1.1.9'   # lldpRemSysName
+LLDP_REM_PORT_ID   = '1.0.8802.1.1.2.1.4.1.1.7'   # lldpRemPortId
+LLDP_REM_PORT_DESC = '1.0.8802.1.1.2.1.4.1.1.8'   # lldpRemPortDesc
+LLDP_REM_MAN_ADDR  = '1.0.8802.1.1.2.1.4.2.1.4'   # lldpRemManAddrIfId (management address)
+LLDP_LOC_PORT_DESC = '1.0.8802.1.1.2.1.3.7.1.4'   # lldpLocPortDesc
+
+CDP_CACHE_TABLE     = '1.3.6.1.4.1.9.9.23.1.2.1.1'
+CDP_CACHE_DEVICE_ID = '1.3.6.1.4.1.9.9.23.1.2.1.1.6'  # cdpCacheDeviceId
+CDP_CACHE_PORT      = '1.3.6.1.4.1.9.9.23.1.2.1.1.7'  # cdpCacheDevicePort
+CDP_CACHE_ADDRESS   = '1.3.6.1.4.1.9.9.23.1.2.1.1.4'  # cdpCacheAddress
+CDP_CACHE_PLATFORM  = '1.3.6.1.4.1.9.9.23.1.2.1.1.8'  # cdpCachePlatform
+
+
+def snmp_get_lldp_neighbors(ip, community):
+    """Get LLDP neighbor table."""
+    if not SNMP_AVAILABLE:
+        return []
+
+    remote_names = snmp_walk(ip, community, LLDP_REM_SYS_NAME)
+    remote_ports = snmp_walk(ip, community, LLDP_REM_PORT_ID)
+    remote_port_descs = snmp_walk(ip, community, LLDP_REM_PORT_DESC)
+    local_port_descs = snmp_walk(ip, community, LLDP_LOC_PORT_DESC)
+
+    neighbors = []
+    for i, name_entry in enumerate(remote_names):
+        neighbor = {
+            'protocol': 'LLDP',
+            'remoteDevice': name_entry['value'],
+            'remotePort': remote_ports[i]['value'] if i < len(remote_ports) else '',
+            'remotePortDesc': remote_port_descs[i]['value'] if i < len(remote_port_descs) else '',
+            'localPort': local_port_descs[i]['value'] if i < len(local_port_descs) else '',
+        }
+        # Try to extract local port index from OID
+        # LLDP OID format: ...9.<timeMark>.<localPortNum>.<index>
+        oid_parts = name_entry['oid'].split('.')
+        if len(oid_parts) >= 2:
+            try:
+                neighbor['localPortIndex'] = int(oid_parts[-2])
+            except (ValueError, IndexError):
+                pass
+        neighbors.append(neighbor)
+
+    return neighbors
+
+
+def snmp_get_cdp_neighbors(ip, community):
+    """Get CDP neighbor table (Cisco devices)."""
+    if not SNMP_AVAILABLE:
+        return []
+
+    device_ids = snmp_walk(ip, community, CDP_CACHE_DEVICE_ID)
+    ports = snmp_walk(ip, community, CDP_CACHE_PORT)
+    platforms = snmp_walk(ip, community, CDP_CACHE_PLATFORM)
+
+    neighbors = []
+    for i, dev_entry in enumerate(device_ids):
+        # Extract local interface index from OID (cdpCacheIfIndex.cdpCacheDeviceIndex)
+        oid_parts = dev_entry['oid'].split('.')
+        local_if_index = None
+        if len(oid_parts) >= 2:
+            try:
+                local_if_index = int(oid_parts[-2])
+            except (ValueError, IndexError):
+                pass
+
+        neighbor = {
+            'protocol': 'CDP',
+            'remoteDevice': dev_entry['value'],
+            'remotePort': ports[i]['value'] if i < len(ports) else '',
+            'platform': platforms[i]['value'] if i < len(platforms) else '',
+            'localPortIndex': local_if_index,
+        }
+        neighbors.append(neighbor)
+
+    return neighbors
+
+
+@app.route('/snmp-topology', methods=['POST'])
+def snmp_topology():
+    """Discover devices and their LLDP/CDP neighbors to build a topology."""
+    subnet = request.json.get('subnet', '192.168.1.0/24')
+    community = request.json.get('community', 'public')
+
+    if not SNMP_AVAILABLE:
+        return jsonify({'error': 'pysnmp not installed. Run: pip install pysnmp'}), 400
+
+    base = subnet.rsplit('.', 1)[0]
+    devices = []
+    all_neighbors = []
+
+    def probe_device(i):
+        ip = f"{base}.{i}"
+        try:
+            result = subprocess.run(
+                ['ping', PING_COUNT, '1', PING_TIMEOUT, '1', ip],
+                capture_output=True, text=True, timeout=3
+            )
+            if result.returncode != 0:
+                return None
+
+            # Try SNMP system info
+            sys_info = snmp_get_system_info(ip, community)
+            if not sys_info:
+                # Device alive but no SNMP — still include it
+                hostname = resolve_host(ip) or f'Host-{i}'
+                device_type, desc = guess_device_type(hostname, ip)
+                return {
+                    'ip': ip,
+                    'hostname': hostname,
+                    'deviceType': device_type,
+                    'description': desc,
+                    'snmpReachable': False,
+                    'interfaces': [],
+                    'neighbors': [],
+                    'vendor': None,
+                    'model': None,
+                }
+
+            hostname = sys_info.get('sysName', f'Host-{i}')
+            vendor, model = parse_vendor_from_sysdescr(sys_info.get('sysDescr', ''))
+            device_type = guess_type_from_snmp(sys_info.get('sysDescr', ''), sys_info.get('sysObjectID', ''))
+            if not device_type:
+                device_type, _ = guess_device_type(hostname, ip)
+
+            interfaces = snmp_get_interfaces(ip, community)
+
+            # Get LLDP + CDP neighbors
+            lldp = snmp_get_lldp_neighbors(ip, community)
+            cdp = snmp_get_cdp_neighbors(ip, community)
+            neighbors = lldp + cdp
+
+            # Resolve local port names from interface table
+            for n in neighbors:
+                idx = n.get('localPortIndex')
+                if idx is not None and idx > 0 and idx <= len(interfaces):
+                    n['localPort'] = interfaces[idx - 1]['name']
+
+            return {
+                'ip': ip,
+                'hostname': hostname,
+                'deviceType': device_type or 'pc',
+                'description': f'{vendor or "Unknown"} {model or ""}',
+                'snmpReachable': True,
+                'system': sys_info,
+                'interfaces': interfaces,
+                'neighbors': neighbors,
+                'vendor': vendor,
+                'model': model,
+            }
+        except Exception:
+            return None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        futures = {executor.submit(probe_device, i): i for i in range(1, 255)}
+        for future in concurrent.futures.as_completed(futures):
+            result = future.result()
+            if result:
+                devices.append(result)
+
+    devices.sort(key=lambda h: [int(x) for x in h['ip'].split('.')])
+
+    # Build links from neighbor data
+    links = []
+    seen_links = set()
+    ip_to_hostname = {d['ip']: d['hostname'] for d in devices}
+    hostname_to_ip = {d['hostname']: d['ip'] for d in devices}
+    # Also map partial hostnames (e.g., CDP often returns FQDN)
+    for d in devices:
+        short = d['hostname'].split('.')[0]
+        if short not in hostname_to_ip:
+            hostname_to_ip[short] = d['ip']
+
+    for device in devices:
+        for neighbor in device.get('neighbors', []):
+            remote_name = neighbor.get('remoteDevice', '')
+            remote_short = remote_name.split('.')[0]
+            remote_ip = hostname_to_ip.get(remote_name) or hostname_to_ip.get(remote_short)
+
+            if not remote_ip:
+                continue
+
+            # Create a canonical link key to avoid duplicates
+            pair = tuple(sorted([device['ip'], remote_ip]))
+            local_port = neighbor.get('localPort', '')
+            remote_port = neighbor.get('remotePort', '')
+            link_key = (pair[0], pair[1], local_port, remote_port)
+            reverse_key = (pair[0], pair[1], remote_port, local_port)
+
+            if link_key in seen_links or reverse_key in seen_links:
+                continue
+            seen_links.add(link_key)
+
+            links.append({
+                'sourceIp': device['ip'],
+                'sourceHostname': device['hostname'],
+                'sourcePort': local_port,
+                'targetIp': remote_ip,
+                'targetHostname': ip_to_hostname.get(remote_ip, remote_name),
+                'targetPort': remote_port,
+                'protocol': neighbor.get('protocol', 'unknown'),
+            })
+
+    return jsonify({
+        'devices': devices,
+        'links': links,
+        'subnet': subnet,
+        'deviceCount': len(devices),
+        'linkCount': len(links),
+    })
+
+
 if __name__ == '__main__':
     print("NetScope Agent running on http://localhost:5111")
     if SNMP_AVAILABLE:

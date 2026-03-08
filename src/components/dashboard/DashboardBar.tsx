@@ -19,9 +19,10 @@ interface DashboardBarProps {
   filterCategory: string;
   setFilterCategory: (c: string) => void;
   onToggleScanner?: () => void;
+  onToggleSnmp?: () => void;
 }
 
-const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner }) => {
+const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner, onToggleSnmp }) => {
   const navigate = useNavigate();
   const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
@@ -155,6 +156,10 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={onToggleScanner}>
         <Radar className="w-3.5 h-3.5" />
         Discover
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={onToggleSnmp}>
+        <Network className="w-3.5 h-3.5" />
+        SNMP
       </Button>
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={handlePingAll} disabled={scanningAll}>
         {scanningAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
