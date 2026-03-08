@@ -8,8 +8,18 @@ export interface PingResult {
   error?: string;
 }
 
+export interface DiscoveredHost {
+  ip: string;
+  hostname: string;
+  deviceType: string;
+  description: string;
+  ports: { port: number; service: string }[];
+  macAddress?: string | null;
+}
+
 export interface ScanResult {
   alive: string[];
+  hosts?: DiscoveredHost[];
 }
 
 export const pingDevice = async (ip: string): Promise<PingResult> => {
