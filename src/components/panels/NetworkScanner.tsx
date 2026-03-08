@@ -26,7 +26,39 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     if (result.alive.length === 0) {
       toast.error('No hosts found. Is the agent running on port 5111?');
     } else {
-      toast.success(`Found ${result.alive.length} live hosts`);
+      const newIps = result.alive.filter(ip => !existingIps.has(ip));
+      // Auto-add all new devices
+      for (const ip of newIps) {
+        const newDevice: NetworkDevice = {
+          id: `discovered-${Date.now()}-${ip.replace(/\./g, '-')}`,
+          hostname: `Host-${ip.split('.').pop()}`,
+          type: 'pc',
+          category: 'endpoint',
+          ipAddress: ip,
+          os: 'Unknown',
+          uptime: '0d 0h',
+          cpu: 0,
+          memory: 0,
+          status: 'up',
+          interfaces: [{
+            id: `${ip.replace(/\./g, '-')}-eth0`,
+            name: 'eth0',
+            type: 'ethernet',
+            speed: '1G',
+            status: 'up',
+            rxBytes: 0,
+            txBytes: 0,
+            enabled: true,
+          }],
+          maxConnections: 4,
+        };
+        addDevice(newDevice, { x: 300 + Math.random() * 400, y: 300 + Math.random() * 400 });
+      }
+      if (newIps.length > 0) {
+        toast.success(`Found ${result.alive.length} hosts — added ${newIps.length} new devices`);
+      } else {
+        toast.success(`Found ${result.alive.length} hosts — all already in topology`);
+      }
     }
     setDiscovered(result.alive);
     setScanning(false);
