@@ -53,16 +53,16 @@ const switchIcons: { name: string; icon: React.FC<{ className?: string; style?: 
 
 // ── FIREWALL icons (10 variations) ──────────────────────────────────
 const firewallIcons: { name: string; icon: React.FC<{ className?: string; style?: React.CSSProperties }> }[] = [
-  { name: 'fw-shield', icon: multiSvg(<><path d="M12 2s-7 3-7 9v4l7 5 7-5v-4c0-6-7-9-7-9z"/></>) },
-  { name: 'fw-shield-check', icon: multiSvg(<><path d="M12 2s-7 3-7 9v4l7 5 7-5v-4c0-6-7-9-7-9z"/><path d="m9 12 2 2 4-4"/></>) },
-  { name: 'fw-shield-x', icon: multiSvg(<><path d="M12 2s-7 3-7 9v4l7 5 7-5v-4c0-6-7-9-7-9z"/><line x1="10" y1="10" x2="14" y2="14"/><line x1="14" y1="10" x2="10" y2="14"/></>) },
+  { name: 'fw-shield', icon: multiSvg(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></>) },
+  { name: 'fw-shield-check', icon: multiSvg(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></>) },
+  { name: 'fw-shield-x', icon: multiSvg(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="10" y1="10" x2="14" y2="14"/><line x1="14" y1="10" x2="10" y2="14"/></>) },
   { name: 'fw-wall', icon: multiSvg(<><rect x="2" y="4" width="20" height="16" rx="1"/><line x1="2" y1="8" x2="22" y2="8"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="16" x2="22" y2="16"/><line x1="7" y1="4" x2="7" y2="8"/><line x1="15" y1="4" x2="15" y2="8"/><line x1="11" y1="8" x2="11" y2="12"/><line x1="7" y1="12" x2="7" y2="16"/><line x1="15" y1="12" x2="15" y2="16"/><line x1="11" y1="16" x2="11" y2="20"/></>) },
   { name: 'fw-lock', icon: multiSvg(<><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/><circle cx="12" cy="15.5" r="1.5" fill="currentColor" stroke="none"/></>) },
   { name: 'fw-gate', icon: multiSvg(<><rect x="3" y="8" width="18" height="10" rx="2"/><line x1="8" y1="8" x2="8" y2="18"/><line x1="16" y1="8" x2="16" y2="18"/><line x1="3" y1="13" x2="8" y2="13"/><line x1="16" y1="13" x2="21" y2="13"/><path d="M10 11v4h4v-4"/></>) },
-  { name: 'fw-shield-bolt', icon: multiSvg(<><path d="M12 2s-7 3-7 9v4l7 5 7-5v-4c0-6-7-9-7-9z"/><path d="M13 9l-2 4h3l-2 4"/></>) },
-  { name: 'fw-barrier', icon: multiSvg(<><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="8" x2="21" y2="8"/><line x1="3" y1="16" x2="21" y2="16"/><circle cx="6" cy="8" r="1.5" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/><circle cx="18" cy="16" r="1.5" fill="currentColor" stroke="none"/></>) },
-  { name: 'fw-shield-key', icon: multiSvg(<><path d="M12 2s-7 3-7 9v4l7 5 7-5v-4c0-6-7-9-7-9z"/><circle cx="12" cy="11" r="2"/><line x1="12" y1="13" x2="12" y2="16"/></>) },
-  { name: 'fw-hex', icon: multiSvg(<><path d="M12 2l8 4.5v7L12 18l-8-4.5v-7z"/><path d="M12 7v5l4 2"/></>) },
+  { name: 'fw-shield-bolt', icon: multiSvg(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M13 8l-2 4h3l-2 4"/></>) },
+  { name: 'fw-shield-eye', icon: multiSvg(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="2.5"/><circle cx="12" cy="11" r="1" fill="currentColor" stroke="none"/></>) },
+  { name: 'fw-shield-key', icon: multiSvg(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="10" r="2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="11" y1="14" x2="13" y2="14"/></>) },
+  { name: 'fw-shield-star', icon: multiSvg(<><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8l1.5 3 3.5.5-2.5 2.5.5 3.5L12 16l-3 1.5.5-3.5L7 11.5l3.5-.5z"/></>) },
 ];
 
 // ── SERVER icons (10 variations) ────────────────────────────────────
