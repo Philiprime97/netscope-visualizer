@@ -13,12 +13,14 @@ import {
   type EdgeChange,
   applyNodeChanges,
   applyEdgeChanges,
+  SelectionMode,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import DeviceNode from './DeviceNode';
 import ConnectionDialog from './ConnectionDialog';
 import { useTopology } from '@/contexts/TopologyContext';
-import { NetworkLink } from '@/types/network';
+import { NetworkLink, NetworkDevice } from '@/types/network';
 import { toast } from 'sonner';
 
 const nodeTypes = { device: DeviceNode };
@@ -30,15 +32,23 @@ type PendingConnection = {
   targetHandle?: string | null;
 };
 
-const TopologyCanvas: React.FC = () => {
+interface ClipboardData {
+  devices: NetworkDevice[];
+  positions: Record<string, { x: number; y: number }>;
+  links: NetworkLink[];
+}
+
+const TopologyCanvasInner: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
     setSelectedDeviceId, setSelectedLinkId,
-    updatePosition, addLink, removeLink,
+    updatePosition, addLink, removeLink, addDevice,
   } = useTopology();
 
   const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null);
   const pendingDragRef = useRef(false);
+  const clipboardRef = useRef<ClipboardData | null>(null);
+  const selectedNodesRef = useRef<Set<string>>(new Set());
 
   const nodes: Node[] = useMemo(() =>
     devices.map(device => ({
@@ -106,23 +116,121 @@ const TopologyCanvas: React.FC = () => {
     });
   }, [removeLink]);
 
+  // Track selection changes
+  const onSelectionChange = useCallback(({ nodes: selectedNodes }: { nodes: Node[] }) => {
+    selectedNodesRef.current = new Set(selectedNodes.map(n => n.id));
+  }, []);
+
+  // Copy handler
+  const handleCopy = useCallback(() => {
+    const selected = selectedNodesRef.current;
+    if (selected.size === 0) return;
+
+    const selectedDevices = devices.filter(d => selected.has(d.id));
+    const selectedPositions: Record<string, { x: number; y: number }> = {};
+    for (const d of selectedDevices) {
+      selectedPositions[d.id] = positions[d.id] || { x: 0, y: 0 };
+    }
+    // Copy links between selected devices
+    const selectedLinks = links.filter(
+      l => selected.has(l.sourceDeviceId) && selected.has(l.targetDeviceId)
+    );
+
+    clipboardRef.current = {
+      devices: selectedDevices,
+      positions: selectedPositions,
+      links: selectedLinks,
+    };
+    toast.success(`Copied ${selectedDevices.length} device${selectedDevices.length > 1 ? 's' : ''}`);
+  }, [devices, positions, links]);
+
+  // Paste handler
+  const handlePaste = useCallback(() => {
+    const clip = clipboardRef.current;
+    if (!clip || clip.devices.length === 0) return;
+
+    const idMap: Record<string, string> = {};
+    const ifaceIdMap: Record<string, string> = {};
+    const ts = Date.now();
+
+    // Calculate offset for pasted devices
+    const OFFSET = 50;
+
+    for (const dev of clip.devices) {
+      const newId = `${dev.type}-${ts}-${Math.random().toString(36).slice(2, 7)}`;
+      idMap[dev.id] = newId;
+
+      const newInterfaces = dev.interfaces.map(iface => {
+        const newIfaceId = `${newId}-${iface.name}`;
+        ifaceIdMap[iface.id] = newIfaceId;
+        return { ...iface, id: newIfaceId };
+      });
+
+      const newDevice: NetworkDevice = {
+        ...dev,
+        id: newId,
+        hostname: `${dev.hostname}-copy`,
+        interfaces: newInterfaces,
+      };
+
+      const pos = clip.positions[dev.id] || { x: 300, y: 300 };
+      addDevice(newDevice, { x: pos.x + OFFSET, y: pos.y + OFFSET });
+    }
+
+    // Recreate links between pasted devices
+    for (const link of clip.links) {
+      const newSrcId = idMap[link.sourceDeviceId];
+      const newTgtId = idMap[link.targetDeviceId];
+      if (!newSrcId || !newTgtId) continue;
+
+      const newLink: NetworkLink = {
+        ...link,
+        id: `link-${ts}-${Math.random().toString(36).slice(2, 7)}`,
+        sourceDeviceId: newSrcId,
+        targetDeviceId: newTgtId,
+        sourceInterfaceId: ifaceIdMap[link.sourceInterfaceId] || link.sourceInterfaceId,
+        targetInterfaceId: ifaceIdMap[link.targetInterfaceId] || link.targetInterfaceId,
+      };
+      addLink(newLink);
+    }
+
+    toast.success(`Pasted ${clip.devices.length} device${clip.devices.length > 1 ? 's' : ''}`);
+  }, [addDevice, addLink]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        if (selectedNodesRef.current.size > 0) {
+          e.preventDefault();
+          handleCopy();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        if (clipboardRef.current) {
+          e.preventDefault();
+          handlePaste();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleCopy, handlePaste]);
+
   const onConnectStart = useCallback(() => {
     pendingDragRef.current = true;
   }, []);
 
   const onConnect = useCallback((connection: Connection) => {
     if (!connection.source || !connection.target) return;
-
     if (connection.source === connection.target) {
       pendingDragRef.current = false;
       toast.error('Choose a different target device.');
       return;
     }
-
     const srcDevice = devices.find(d => d.id === connection.source);
     const tgtDevice = devices.find(d => d.id === connection.target);
     if (!srcDevice || !tgtDevice) return;
-
     pendingDragRef.current = false;
     setPendingConnection({
       sourceId: connection.source,
@@ -141,7 +249,6 @@ const TopologyCanvas: React.FC = () => {
 
   const handleConnectionConfirm = useCallback((srcIfaceId: string, tgtIfaceId: string) => {
     if (!pendingConnection) return;
-
     const newLink: NetworkLink = {
       id: `link-${Date.now()}`,
       sourceDeviceId: pendingConnection.sourceId,
@@ -154,7 +261,6 @@ const TopologyCanvas: React.FC = () => {
       linkType: 'access',
       status: 'up',
     };
-
     addLink(newLink);
     toast.success('Connection created');
     setPendingConnection(null);
@@ -189,7 +295,7 @@ const TopologyCanvas: React.FC = () => {
   return (
     <div className="relative w-full h-full">
       <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm">
-        Drag from any side handle to any side handle
+        Drag to select • Ctrl+C / Ctrl+V to copy-paste • Shift+click to multi-select
       </div>
 
       <ReactFlow
@@ -203,13 +309,18 @@ const TopologyCanvas: React.FC = () => {
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
+        onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
         connectionMode={ConnectionMode.Loose}
+        selectionMode={SelectionMode.Partial}
+        selectionOnDrag
+        panOnDrag={[1, 2]}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         snapToGrid
         snapGrid={[12, 12]}
         deleteKeyCode="Delete"
+        multiSelectionKeyCode="Shift"
         className="topology-grid"
       >
         <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="hsl(220, 15%, 15%)" />
@@ -241,5 +352,7 @@ const TopologyCanvas: React.FC = () => {
     </div>
   );
 };
+
+const TopologyCanvas: React.FC = () => <TopologyCanvasInner />;
 
 export default TopologyCanvas;
