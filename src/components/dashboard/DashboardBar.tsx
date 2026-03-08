@@ -119,6 +119,10 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         <Upload className="w-3.5 h-3.5" />
         Import
       </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={onToggleScanner}>
+        <Radar className="w-3.5 h-3.5" />
+        Scan
+      </Button>
 
       <Separator orientation="vertical" className="h-6" />
 

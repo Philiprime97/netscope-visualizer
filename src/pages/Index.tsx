@@ -5,12 +5,14 @@ import TopologyCanvas from '@/components/topology/TopologyCanvas';
 import DashboardBar from '@/components/dashboard/DashboardBar';
 import DevicePanel from '@/components/panels/DevicePanel';
 import LinkPanel from '@/components/panels/LinkPanel';
+import NetworkScanner from '@/components/panels/NetworkScanner';
 import Login from './Login';
 
 const TopologyView: React.FC = () => {
   const { selectedDeviceId, selectedLinkId, loadTopology } = useTopology();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('netscope-load-topology');
@@ -29,6 +31,7 @@ const TopologyView: React.FC = () => {
         setSearchQuery={setSearchQuery}
         filterCategory={filterCategory}
         setFilterCategory={setFilterCategory}
+        onToggleScanner={() => setShowScanner(s => !s)}
       />
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1">
@@ -36,6 +39,7 @@ const TopologyView: React.FC = () => {
         </div>
         {selectedDeviceId && <DevicePanel />}
         {selectedLinkId && !selectedDeviceId && <LinkPanel />}
+        {showScanner && !selectedDeviceId && !selectedLinkId && <NetworkScanner onClose={() => setShowScanner(false)} />}
       </div>
     </div>
   );
