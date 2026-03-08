@@ -42,6 +42,7 @@ interface ClipboardData {
 const TopologyCanvasInner: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
+    annotations, updateAnnotation, removeAnnotation,
     setSelectedDeviceId, setSelectedLinkId,
     updatePosition, addLink, removeLink, removeDevice, addDevice,
   } = useTopology();
