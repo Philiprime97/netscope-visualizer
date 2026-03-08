@@ -19,6 +19,7 @@ interface DashboardBarProps {
   filterCategory: string;
   setFilterCategory: (c: string) => void;
   onToggleScanner?: () => void;
+  onToggleSnmp?: () => void;
 }
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner }) => {
