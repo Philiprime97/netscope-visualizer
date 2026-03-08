@@ -162,6 +162,10 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         <Network className="w-3.5 h-3.5" />
         SNMP
       </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={onToggleNotes}>
+        <StickyNote className="w-3.5 h-3.5" />
+        Notes
+      </Button>
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={handlePingAll} disabled={scanningAll}>
         {scanningAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
         {scanningAll ? 'Pinging...' : 'Ping'}
