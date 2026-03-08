@@ -34,11 +34,9 @@ const DeviceNode: React.FC<NodeProps> = ({ data, selected }) => {
         <span className="text-[11px] font-semibold text-foreground truncate max-w-[90px]">
           {device.hostname}
         </span>
-        {showLabels && (
-          <span className="text-[9px] font-mono text-muted-foreground">
-            {device.ipAddress}
-          </span>
-        )}
+        <span className="text-[9px] font-mono text-muted-foreground">
+          {device.ipAddress}
+        </span>
       </div>
     </div>
   );
