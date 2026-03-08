@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { TopologyProvider, useTopology } from '@/contexts/TopologyContext';
+import { useTopology } from '@/contexts/TopologyContext';
 import TopologyCanvas from '@/components/topology/TopologyCanvas';
 import DashboardBar from '@/components/dashboard/DashboardBar';
 import DevicePanel from '@/components/panels/DevicePanel';
