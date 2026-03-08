@@ -37,6 +37,8 @@ interface TopologyContextValue {
   getConnectionCount: (deviceId: string) => number;
   exportTopology: () => SavedTopology;
   loadTopology: (topology: SavedTopology) => void;
+  notes: string;
+  setNotes: (notes: string) => void;
 }
 
 const TopologyContext = createContext<TopologyContextValue | null>(null);
