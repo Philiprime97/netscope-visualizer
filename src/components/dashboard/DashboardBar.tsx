@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2, StickyNote, Type } from 'lucide-react';
+import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2, StickyNote, Type, LayoutGrid, Image, GitBranch } from 'lucide-react';
 import { pingDevice } from '@/services/pingAgent';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ interface DashboardBarProps {
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner, onToggleSnmp, onToggleNotes }) => {
   const navigate = useNavigate();
-  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology, addAnnotation } = useTopology();
+  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology, addAnnotation, updatePosition } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
   const { user, logout, isAdmin } = useAuth();
   const [scanningAll, setScanningAll] = useState(false);
@@ -36,7 +36,7 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
     let upCount = 0;
     let downCount = 0;
     const results = await Promise.all(
-      devices.map(d => pingDevice(d.ipAddress).then(r => ({ id: d.id, ...r })))
+      devices.map(d => pingDevice(d.ipAddress).then(r => ({ id: d.id, device: d, ...r })))
     );
     for (const r of results) {
       if (r.error) {
@@ -44,7 +44,14 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         setScanningAll(false);
         return;
       }
-      updateDevice(r.id, { status: r.reachable ? 'up' : 'down' });
+      const now = new Date().toLocaleTimeString();
+      const history = [...(r.device.uptimeHistory || []), { time: now, up: !!r.reachable }].slice(-20);
+      const latency = r.output?.match(/time[=<](\d+\.?\d*)/)?.[1];
+      updateDevice(r.id, {
+        status: r.reachable ? 'up' : 'down',
+        latency: latency ? parseFloat(latency) : undefined,
+        uptimeHistory: history,
+      });
       if (r.reachable) upCount++; else downCount++;
     }
     toast.success(`Scan complete: ${upCount} up, ${downCount} down`);
@@ -175,6 +182,66 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         <Type className="w-3.5 h-3.5" />
         Text Box
       </Button>
+
+      {/* Layout & Export */}
+      <Select onValueChange={(v) => {
+        const devs = devices;
+        if (devs.length === 0) return;
+        const sorted = [...devs];
+        const spacing = { x: 180, y: 140 };
+        if (v === 'grid') {
+          const cols = Math.ceil(Math.sqrt(sorted.length));
+          sorted.forEach((d, i) => {
+            updatePosition(d.id, 100 + (i % cols) * spacing.x, 100 + Math.floor(i / cols) * spacing.y);
+          });
+        } else if (v === 'tree') {
+          // Network devices on top, endpoints middle, containers bottom
+          const groups = { network: [] as typeof devs, endpoint: [] as typeof devs, container: [] as typeof devs };
+          sorted.forEach(d => (groups[d.category] || groups.endpoint).push(d));
+          let y = 80;
+          Object.values(groups).forEach(group => {
+            group.forEach((d, i) => {
+              updatePosition(d.id, 100 + i * spacing.x, y);
+            });
+            if (group.length > 0) y += spacing.y;
+          });
+        } else if (v === 'circular') {
+          const cx = 400, cy = 350, r = Math.max(150, sorted.length * 30);
+          sorted.forEach((d, i) => {
+            const angle = (2 * Math.PI * i) / sorted.length - Math.PI / 2;
+            updatePosition(d.id, cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+          });
+        }
+        toast.success(`Applied ${v} layout`);
+      }}>
+        <SelectTrigger className="h-8 w-[90px] text-xs gap-1">
+          <LayoutGrid className="w-3 h-3" />
+          <SelectValue placeholder="Layout" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="grid">Grid</SelectItem>
+          <SelectItem value="tree">Tree</SelectItem>
+          <SelectItem value="circular">Circular</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
+        const el = document.querySelector('.react-flow') as HTMLElement;
+        if (!el) return;
+        import('html-to-image').then(({ toPng }) => {
+          toPng(el, { backgroundColor: '#0a0c10' }).then((dataUrl) => {
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `topology-${Date.now()}.png`;
+            a.click();
+            toast.success('Topology exported as PNG');
+          }).catch(() => toast.error('Failed to export'));
+        });
+      }}>
+        <Image className="w-3.5 h-3.5" />
+        Export PNG
+      </Button>
+
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={handlePingAll} disabled={scanningAll}>
         {scanningAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
         {scanningAll ? 'Pinging...' : 'Ping'}

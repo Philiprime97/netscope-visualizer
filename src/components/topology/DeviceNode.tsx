@@ -46,6 +46,15 @@ const DeviceNode: React.FC<NodeProps> = ({ data, selected }) => {
         <span className="text-[10px] font-mono text-primary/90 bg-primary/10 px-1.5 py-0.5 rounded">
           {device.ipAddress}
         </span>
+        {device.latency != null && (
+          <span className={`text-[9px] font-mono px-1 py-0.5 rounded ${
+            device.latency < 10 ? 'bg-green-500/15 text-green-400' :
+            device.latency < 50 ? 'bg-yellow-500/15 text-yellow-400' :
+            'bg-red-500/15 text-red-400'
+          }`}>
+            {device.latency}ms
+          </span>
+        )}
       </div>
     </div>
   );

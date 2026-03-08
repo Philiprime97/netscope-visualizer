@@ -318,6 +318,51 @@ const Dashboard: React.FC = () => {
           </Card>
         </div>
 
+        {/* Latency & Uptime */}
+        <Card className="glass-panel border-border">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Activity className="w-3.5 h-3.5" /> Device Latency & Uptime
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {devices.map(d => (
+                <div key={d.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-secondary/50 text-xs">
+                  <DeviceIcon type={d.type} size={16} />
+                  <span className="font-medium w-[100px] truncate">{d.hostname}</span>
+                  <span className="font-mono text-muted-foreground w-[110px]">{d.ipAddress}</span>
+                  {/* Latency badge */}
+                  <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded min-w-[50px] text-center ${
+                    d.latency == null ? 'text-muted-foreground' :
+                    d.latency < 10 ? 'bg-green-500/15 text-green-400' :
+                    d.latency < 50 ? 'bg-yellow-500/15 text-yellow-400' :
+                    'bg-red-500/15 text-red-400'
+                  }`}>
+                    {d.latency != null ? `${d.latency}ms` : '—'}
+                  </span>
+                  {/* Uptime sparkline */}
+                  <div className="flex items-center gap-[2px] flex-1">
+                    {(d.uptimeHistory || []).slice(-15).map((h, i) => (
+                      <div
+                        key={i}
+                        className={`w-2 h-4 rounded-sm ${h.up ? 'bg-green-500/60' : 'bg-red-500/60'}`}
+                        title={`${h.time}: ${h.up ? 'UP' : 'DOWN'}`}
+                      />
+                    ))}
+                    {(!d.uptimeHistory || d.uptimeHistory.length === 0) && (
+                      <span className="text-[10px] text-muted-foreground">No ping history</span>
+                    )}
+                  </div>
+                  <Badge variant={d.status === 'up' ? 'default' : 'destructive'} className="text-[10px] h-5">
+                    {d.status.toUpperCase()}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Alerts table */}
         {alerts.length > 0 && (
           <Card className="glass-panel border-border">
