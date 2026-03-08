@@ -34,7 +34,7 @@ const TextBoxNode: React.FC<NodeProps> = ({ id, data, selected }) => {
   return (
     <div
       className={`group relative min-w-[80px] max-w-[280px] rounded-md border px-2.5 py-1.5 text-xs font-mono transition-colors
-        ${selected ? 'border-primary bg-primary/10 shadow-md' : 'border-border/60 bg-background/80 backdrop-blur-sm'}
+        ${selected ? 'border-primary bg-primary/15 shadow-md' : 'border-border bg-muted/80 backdrop-blur-sm'}
       `}
       onDoubleClick={() => setEditing(true)}
     >
