@@ -127,8 +127,9 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       devices,
       links,
       positions,
+      notes,
     };
-  }, [devices, links, positions]);
+  }, [devices, links, positions, notes]);
 
   const loadTopology = useCallback((topology: SavedTopology) => {
     setDevices(topology.devices);
