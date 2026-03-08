@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen } from 'lucide-react';
+import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,8 @@ interface DashboardBarProps {
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory }) => {
   const navigate = useNavigate();
-  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, exportTopology } = useTopology();
+  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, exportTopology, loadTopology } = useTopology();
+  const importRef = useRef<HTMLInputElement>(null);
   const { user, logout, isAdmin } = useAuth();
 
   const totalDevices = devices.length;
@@ -92,6 +93,30 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
       }}>
         <Save className="w-3.5 h-3.5" />
         Save
+      </Button>
+      <input ref={importRef} type="file" accept=".json" className="hidden" onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target?.result as string);
+            if (!data.devices || !data.links || !data.positions) {
+              toast.error('Invalid topology file');
+              return;
+            }
+            loadTopology(data);
+            toast.success(`Loaded "${data.name || file.name}"`);
+          } catch {
+            toast.error('Failed to parse JSON file');
+          }
+        };
+        reader.readAsText(file);
+        if (importRef.current) importRef.current.value = '';
+      }} />
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => importRef.current?.click()}>
+        <Upload className="w-3.5 h-3.5" />
+        Import
       </Button>
 
       <Separator orientation="vertical" className="h-6" />
