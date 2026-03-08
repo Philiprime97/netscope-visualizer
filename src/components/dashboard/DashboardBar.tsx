@@ -72,11 +72,23 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         Topologies
       </Button>
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
+        const name = prompt('Topology name:', `Topology ${new Date().toLocaleDateString()}`);
+        if (!name) return;
         const topo = exportTopology();
+        topo.name = name;
+        // Save to localStorage
         const existing = JSON.parse(localStorage.getItem('netscope-saved-topologies') || '[]');
         existing.push(topo);
         localStorage.setItem('netscope-saved-topologies', JSON.stringify(existing));
-        toast.success(`Saved "${topo.name}"`);
+        // Download as JSON file
+        const blob = new Blob([JSON.stringify(topo, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${name.replace(/\s+/g, '-').toLowerCase()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success(`Saved and downloaded "${name}"`);
       }}>
         <Save className="w-3.5 h-3.5" />
         Save
