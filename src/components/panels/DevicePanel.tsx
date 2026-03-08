@@ -273,6 +273,40 @@ const DevicePanel: React.FC = () => {
 
         <Separator />
 
+        {/* Ping */}
+        <Button
+          variant="outline"
+          className="w-full gap-2 text-xs"
+          disabled={pinging[device.ipAddress]}
+          onClick={async () => {
+            const result = await ping(device.ipAddress);
+            if (result.error) {
+              toast.error(result.error);
+            } else if (result.reachable) {
+              toast.success(`${device.ipAddress} is reachable`);
+              updateDevice(device.id, { status: 'up' });
+            } else {
+              toast.error(`${device.ipAddress} is unreachable`);
+              updateDevice(device.id, { status: 'down' });
+            }
+          }}
+        >
+          {pinging[device.ipAddress] ? <Loader2 className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}
+          {pinging[device.ipAddress] ? 'Pinging...' : 'Ping Device'}
+        </Button>
+        {results[device.ipAddress] && (
+          <div className={`text-[10px] font-mono p-2 rounded-md ${results[device.ipAddress].reachable ? 'bg-emerald-500/10 text-emerald-400' : 'bg-destructive/10 text-destructive'}`}>
+            {results[device.ipAddress].reachable ? '✓ Reachable' : '✗ Unreachable'}
+            {results[device.ipAddress].output && (
+              <pre className="mt-1 text-[9px] text-muted-foreground whitespace-pre-wrap max-h-20 overflow-y-auto">
+                {results[device.ipAddress].output}
+              </pre>
+            )}
+          </div>
+        )}
+
+        <Separator />
+
         {/* Terminal */}
         <Button variant="outline" className="w-full gap-2 text-xs" onClick={() => toast.info('Terminal feature coming soon')}>
           <Terminal className="w-4 h-4" />
