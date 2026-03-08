@@ -9,19 +9,8 @@ interface DeviceNodeData {
   [key: string]: unknown;
 }
 
-/** Generate evenly-spaced handles around the node perimeter */
+/** Distribute N handles evenly across 4 sides with equal spacing */
 function buildHandles(count: number) {
-  // First 4 are always the cardinal directions for backward compat
-  const base: { id: string; position: Position; style: React.CSSProperties }[] = [
-    { id: 'top', position: Position.Top, style: { left: '50%' } },
-    { id: 'right', position: Position.Right, style: { top: '50%' } },
-    { id: 'bottom', position: Position.Bottom, style: { left: '50%' } },
-    { id: 'left', position: Position.Left, style: { top: '50%' } },
-  ];
-
-  if (count <= 4) return base.slice(0, count);
-
-  const extra: typeof base = [];
   const sides: { position: Position; axis: 'left' | 'top' }[] = [
     { position: Position.Top, axis: 'left' },
     { position: Position.Right, axis: 'top' },
@@ -29,30 +18,30 @@ function buildHandles(count: number) {
     { position: Position.Left, axis: 'top' },
   ];
 
-  // Distribute extra connectors round-robin across sides
-  let remaining = count - 4;
-  let sideIdx = 0;
-  const sideExtras: number[] = [0, 0, 0, 0];
-  while (remaining > 0) {
-    sideExtras[sideIdx % 4]++;
-    sideIdx++;
-    remaining--;
+  // Distribute handles round-robin across sides
+  const perSide = [0, 0, 0, 0];
+  for (let i = 0; i < count; i++) {
+    perSide[i % 4]++;
   }
 
-  sideExtras.forEach((n, si) => {
+  const handles: { id: string; position: Position; style: React.CSSProperties }[] = [];
+
+  // Legacy IDs for the first handle on each side (backward compat)
+  const legacyIds = ['top', 'right', 'bottom', 'left'];
+
+  perSide.forEach((n, si) => {
     for (let i = 0; i < n; i++) {
       const pct = ((i + 1) / (n + 1)) * 100;
-      // Offset from center to avoid overlapping with the cardinal handle at 50%
-      const adjustedPct = pct >= 45 && pct <= 55 ? (pct < 50 ? pct - 10 : pct + 10) : pct;
-      extra.push({
-        id: `${sides[si].position}-${i}`,
+      const id = i === 0 ? legacyIds[si] : `${sides[si].position}-${i}`;
+      handles.push({
+        id,
         position: sides[si].position,
-        style: { [sides[si].axis]: `${adjustedPct}%` },
+        style: { [sides[si].axis]: `${pct}%` },
       });
     }
   });
 
-  return [...base, ...extra];
+  return handles;
 }
 
 const handleClasses: Record<string, string> = {
