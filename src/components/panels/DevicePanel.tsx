@@ -21,6 +21,7 @@ const formatBytes = (b: number) => {
 const DevicePanel: React.FC = () => {
   const { devices, links, selectedDeviceId, setSelectedDeviceId, removeDevice, removeLink, removeInterface, addInterface, updateDevice, updateInterface } = useTopology();
   const { isAdmin } = useAuth();
+  const { results, pinging, ping } = usePing();
   const device = devices.find(d => d.id === selectedDeviceId);
   const [editing, setEditing] = useState(false);
   const [editHostname, setEditHostname] = useState('');
