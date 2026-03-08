@@ -166,6 +166,15 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         <StickyNote className="w-3.5 h-3.5" />
         Notes
       </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
+        addAnnotation(
+          { id: `text-${Date.now()}`, text: '' },
+          { x: 300 + Math.random() * 100, y: 300 + Math.random() * 100 }
+        );
+      }}>
+        <Type className="w-3.5 h-3.5" />
+        Text Box
+      </Button>
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={handlePingAll} disabled={scanningAll}>
         {scanningAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
         {scanningAll ? 'Pinging...' : 'Ping'}
