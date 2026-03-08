@@ -163,7 +163,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setHosts([]);
     setAdded(new Set());
     sessionStorage.removeItem(SCANNER_CACHE_KEY);
-    toast.success('Scan results cleared');
+    toast.success('Ping results cleared');
   };
 
   const handleAdd = (host: DiscoveredHost) => {
