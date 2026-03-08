@@ -25,7 +25,7 @@ interface DashboardBarProps {
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner, onToggleSnmp, onToggleNotes }) => {
   const navigate = useNavigate();
-  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology, addAnnotation } = useTopology();
+  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology, addAnnotation, updatePosition } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
   const { user, logout, isAdmin } = useAuth();
   const [scanningAll, setScanningAll] = useState(false);
