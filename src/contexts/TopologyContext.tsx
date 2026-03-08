@@ -149,6 +149,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updateInterface, addInterface, removeInterface,
       addLink, removeLink, updateLink, getConnectionCount,
       exportTopology, loadTopology,
+      notes, setNotes,
     }}>
       {children}
     </TopologyContext.Provider>
