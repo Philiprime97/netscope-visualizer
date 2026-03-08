@@ -4,7 +4,7 @@ import { SavedTopology } from '@/contexts/TopologyContext';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Network, Download, Upload, Trash2, ArrowLeft, FileJson, Clock } from 'lucide-react';
+import { Network, Download, Upload, Trash2, ArrowLeft, FileJson, Clock, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import Login from './Login';
@@ -81,6 +81,22 @@ const TopologiesPage: React.FC = () => {
     toast.success(`Loading "${topo.name}"`);
   };
 
+  const handleNew = () => {
+    const name = prompt('New topology name:', `Topology ${new Date().toLocaleDateString()}`);
+    if (!name) return;
+    const empty: SavedTopology = {
+      id: `topo-${Date.now()}`,
+      name,
+      savedAt: new Date().toISOString(),
+      devices: [],
+      links: [],
+      positions: {},
+    };
+    sessionStorage.setItem('netscope-load-topology', JSON.stringify(empty));
+    navigate('/');
+    toast.success(`Created "${name}" — add devices to get started`);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="h-14 border-b border-border flex items-center px-4 gap-3">
@@ -90,9 +106,13 @@ const TopologiesPage: React.FC = () => {
         </Button>
         <Network className="w-5 h-5 text-primary" />
         <span className="text-sm font-bold tracking-tight">Saved Topologies</span>
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-2">
+          <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleNew}>
+            <Plus className="w-3.5 h-3.5" />
+            New Topology
+          </Button>
           <input ref={fileInputRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
-          <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => fileInputRef.current?.click()}>
+          <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={() => fileInputRef.current?.click()}>
             <Upload className="w-3.5 h-3.5" />
             Import JSON
           </Button>
