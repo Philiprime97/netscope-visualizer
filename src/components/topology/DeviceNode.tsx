@@ -32,7 +32,7 @@ const DeviceNode: React.FC<NodeProps> = ({ data, selected }) => {
         <span className="text-[11px] font-semibold text-foreground truncate max-w-[90px]">
           {device.hostname}
         </span>
-        <span className="text-[9px] font-mono text-muted-foreground">
+        <span className="text-[10px] font-mono text-primary/90 bg-primary/10 px-1.5 py-0.5 rounded">
           {device.ipAddress}
         </span>
       </div>
