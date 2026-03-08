@@ -72,7 +72,8 @@ const TopologyCanvas: React.FC = () => {
         style: {
           stroke: link.status === 'up' ? 'hsl(185, 80%, 50%)' : 'hsl(0, 70%, 55%)',
           strokeWidth: link.speed === '10G' ? 3 : link.speed === '1G' ? 2 : 1.5,
-          opacity: link.status === 'up' ? 0.7 : 0.35,
+          opacity: link.status === 'up' ? 0.7 : 0.85,
+          strokeDasharray: link.status === 'down' ? '6 4' : undefined,
         },
         data: { link },
       };
