@@ -102,17 +102,6 @@ const TopologyCanvas: React.FC = () => {
     const tgtDevice = devices.find(d => d.id === connection.target);
     if (!srcDevice || !tgtDevice) return;
 
-    const srcCount = getConnectionCount(connection.source);
-    const tgtCount = getConnectionCount(connection.target);
-    if (srcCount >= srcDevice.maxConnections) {
-      toast.error(`${srcDevice.hostname} has reached max connections (${srcDevice.maxConnections})`);
-      return;
-    }
-    if (tgtCount >= tgtDevice.maxConnections) {
-      toast.error(`${tgtDevice.hostname} has reached max connections (${tgtDevice.maxConnections})`);
-      return;
-    }
-
     // Open interface picker dialog
     setPendingConnection({ sourceId: connection.source, targetId: connection.target });
   }, [devices, getConnectionCount]);
