@@ -94,6 +94,30 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         <Save className="w-3.5 h-3.5" />
         Save
       </Button>
+      <input ref={importRef} type="file" accept=".json" className="hidden" onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target?.result as string);
+            if (!data.devices || !data.links || !data.positions) {
+              toast.error('Invalid topology file');
+              return;
+            }
+            loadTopology(data);
+            toast.success(`Loaded "${data.name || file.name}"`);
+          } catch {
+            toast.error('Failed to parse JSON file');
+          }
+        };
+        reader.readAsText(file);
+        if (importRef.current) importRef.current.value = '';
+      }} />
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => importRef.current?.click()}>
+        <Upload className="w-3.5 h-3.5" />
+        Import
+      </Button>
 
       <Separator orientation="vertical" className="h-6" />
 
