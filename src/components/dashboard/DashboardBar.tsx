@@ -23,7 +23,7 @@ interface DashboardBarProps {
   onToggleNotes?: () => void;
 }
 
-const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner, onToggleSnmp }) => {
+const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner, onToggleSnmp, onToggleNotes }) => {
   const navigate = useNavigate();
   const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
