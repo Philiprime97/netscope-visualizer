@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { scanSubnet, DiscoveredHost } from '@/services/pingAgent';
 import { useTopology } from '@/contexts/TopologyContext';
 import { NetworkDevice, DeviceType, DeviceInterface } from '@/types/network';
@@ -6,17 +6,37 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Radar, Loader2, Plus, Check, ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { Radar, Loader2, Plus, Check, ChevronDown, ChevronRight, Info, RefreshCw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeviceIcon } from '@/components/topology/DeviceIcons';
 
+const SCANNER_CACHE_KEY = 'netscope-scanner-cache';
+
+interface ScannerCache {
+  hosts: DiscoveredHost[];
+  subnet: string;
+  added: string[];
+}
+
+const loadCache = (): ScannerCache | null => {
+  try {
+    const raw = sessionStorage.getItem(SCANNER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+
+const saveCache = (cache: ScannerCache) => {
+  sessionStorage.setItem(SCANNER_CACHE_KEY, JSON.stringify(cache));
+};
+
 const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { devices, addDevice } = useTopology();
-  const [subnet, setSubnet] = useState('192.168.1.0/24');
+  const cache = loadCache();
+  const [subnet, setSubnet] = useState(cache?.subnet || '192.168.1.0/24');
   const [community, setCommunity] = useState('');
   const [scanning, setScanning] = useState(false);
-  const [hosts, setHosts] = useState<DiscoveredHost[]>([]);
-  const [added, setAdded] = useState<Set<string>>(new Set());
+  const [hosts, setHosts] = useState<DiscoveredHost[]>(cache?.hosts || []);
+  const [added, setAdded] = useState<Set<string>>(new Set(cache?.added || []));
   const [autoAdd, setAutoAdd] = useState(false);
 
   const existingIps = new Set(devices.map(d => d.ipAddress));
@@ -80,11 +100,20 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     };
   };
 
-  const handleScan = async () => {
+  // Persist cache whenever hosts/added/subnet change
+  useEffect(() => {
+    if (hosts.length > 0) {
+      saveCache({ hosts, subnet, added: Array.from(added) });
+    }
+  }, [hosts, added, subnet]);
+
+  const handleScan = async (rediscover = false) => {
     setScanning(true);
-    setHosts([]);
-    setAdded(new Set());
-    toast.info(`Scanning ${subnet}${community ? ' with SNMP' : ''}...`);
+    if (!rediscover) {
+      setHosts([]);
+      setAdded(new Set());
+    }
+    toast.info(`${rediscover ? 'Rediscovering' : 'Scanning'} ${subnet}${community ? ' with SNMP' : ''}...`);
     const result = await scanSubnet(subnet, community || undefined);
 
     if (result.alive.length === 0) {
@@ -101,7 +130,16 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       ports: [],
     }));
 
-    setHosts(discoveredHosts);
+    // Merge with existing hosts on rediscover
+    if (rediscover) {
+      const existingMap = new Map(hosts.map(h => [h.ip, h]));
+      for (const h of discoveredHosts) {
+        existingMap.set(h.ip, h); // update existing, add new
+      }
+      setHosts(Array.from(existingMap.values()));
+    } else {
+      setHosts(discoveredHosts);
+    }
 
     if (autoAdd) {
       const newHosts = discoveredHosts.filter(h => !existingIps.has(h.ip));
@@ -119,6 +157,13 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
 
     setScanning(false);
+  };
+
+  const handleClearResults = () => {
+    setHosts([]);
+    setAdded(new Set());
+    sessionStorage.removeItem(SCANNER_CACHE_KEY);
+    toast.success('Scan results cleared');
   };
 
   const handleAdd = (host: DiscoveredHost) => {
@@ -165,7 +210,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               placeholder="192.168.1.0/24"
               className="h-8 text-xs font-mono"
             />
-            <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleScan} disabled={scanning}>
+            <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => handleScan()} disabled={scanning}>
               {scanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
               {scanning ? 'Scanning...' : 'Scan'}
             </Button>
@@ -208,11 +253,19 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               {newHosts.length > 0 && <Badge className="text-[10px]">{newHosts.length} new</Badge>}
               {knownHosts.length > 0 && <Badge variant="outline" className="text-[10px]">{knownHosts.length} known</Badge>}
               {hosts.some(h => h.snmp) && <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">SNMP</Badge>}
-              {newHosts.filter(h => !added.has(h.ip)).length > 0 && (
-                <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1 ml-auto" onClick={handleAddAll}>
-                  <Plus className="w-3 h-3" /> Add All New
+              <div className="ml-auto flex items-center gap-1">
+                <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => handleScan(true)} disabled={scanning}>
+                  <RefreshCw className={`w-3 h-3 ${scanning ? 'animate-spin' : ''}`} /> Rediscover
                 </Button>
-              )}
+                <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={handleClearResults}>
+                  <X className="w-3 h-3" /> Clear
+                </Button>
+                {newHosts.filter(h => !added.has(h.ip)).length > 0 && (
+                  <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={handleAddAll}>
+                    <Plus className="w-3 h-3" /> Add All New
+                  </Button>
+                )}
+              </div>
             </div>
 
             {newHosts.length > 0 && (
