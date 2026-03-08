@@ -300,14 +300,17 @@ const DevicePanel: React.FC = () => {
           disabled={pinging[device.ipAddress]}
           onClick={async () => {
             const result = await ping(device.ipAddress);
+            const now = new Date().toLocaleTimeString();
+            const history = [...(device.uptimeHistory || []), { time: now, up: !!result.reachable }].slice(-20);
             if (result.error) {
               toast.error(result.error);
             } else if (result.reachable) {
-              toast.success(`${device.ipAddress} is reachable`);
-              updateDevice(device.id, { status: 'up' });
+              const latency = result.output?.match(/time[=<](\d+\.?\d*)/)?.[1];
+              toast.success(`${device.ipAddress} is reachable${latency ? ` (${latency}ms)` : ''}`);
+              updateDevice(device.id, { status: 'up', latency: latency ? parseFloat(latency) : undefined, uptimeHistory: history });
             } else {
               toast.error(`${device.ipAddress} is unreachable`);
-              updateDevice(device.id, { status: 'down' });
+              updateDevice(device.id, { status: 'down', latency: undefined, uptimeHistory: history });
             }
           }}
         >
