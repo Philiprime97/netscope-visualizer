@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useEffect, useState, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -8,6 +8,7 @@ import {
   type Edge,
   type Node,
   BackgroundVariant,
+  ConnectionMode,
   type NodeChange,
   type EdgeChange,
   applyNodeChanges,
@@ -37,6 +38,7 @@ const TopologyCanvas: React.FC = () => {
   } = useTopology();
 
   const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null);
+  const pendingDragRef = useRef(false);
 
   const nodes: Node[] = useMemo(() =>
     devices.map(device => ({
@@ -103,13 +105,24 @@ const TopologyCanvas: React.FC = () => {
     });
   }, [removeLink]);
 
+  const onConnectStart = useCallback(() => {
+    pendingDragRef.current = true;
+  }, []);
+
   const onConnect = useCallback((connection: Connection) => {
     if (!connection.source || !connection.target) return;
+
+    if (connection.source === connection.target) {
+      pendingDragRef.current = false;
+      toast.error('Choose a different target device.');
+      return;
+    }
 
     const srcDevice = devices.find(d => d.id === connection.source);
     const tgtDevice = devices.find(d => d.id === connection.target);
     if (!srcDevice || !tgtDevice) return;
 
+    pendingDragRef.current = false;
     setPendingConnection({
       sourceId: connection.source,
       targetId: connection.target,
@@ -117,6 +130,13 @@ const TopologyCanvas: React.FC = () => {
       targetHandle: connection.targetHandle,
     });
   }, [devices]);
+
+  const onConnectEnd = useCallback(() => {
+    if (pendingDragRef.current) {
+      toast.info('Drop on any device side handle to connect.');
+      pendingDragRef.current = false;
+    }
+  }, []);
 
   const handleConnectionConfirm = useCallback((srcIfaceId: string, tgtIfaceId: string) => {
     if (!pendingConnection) return;
@@ -166,17 +186,24 @@ const TopologyCanvas: React.FC = () => {
     : [];
 
   return (
-    <div className="w-full h-full">
+    <div className="relative w-full h-full">
+      <div className="pointer-events-none absolute left-3 top-3 z-10 rounded-md border border-border bg-background/80 px-2 py-1 text-[10px] text-muted-foreground backdrop-blur-sm">
+        Drag from any side handle to any side handle
+      </div>
+
       <ReactFlow
         nodes={localNodes}
         edges={localEdges}
         onNodesChange={handleNodesChange}
         onEdgesChange={handleEdgesChange}
+        onConnectStart={onConnectStart}
         onConnect={onConnect}
+        onConnectEnd={onConnectEnd}
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
+        connectionMode={ConnectionMode.Loose}
         fitView
         fitViewOptions={{ padding: 0.2 }}
         snapToGrid
