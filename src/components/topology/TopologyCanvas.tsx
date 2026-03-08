@@ -42,7 +42,7 @@ const TopologyCanvasInner: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
     setSelectedDeviceId, setSelectedLinkId,
-    updatePosition, addLink, removeLink, addDevice,
+    updatePosition, addLink, removeLink, removeDevice, addDevice,
   } = useTopology();
 
   const [pendingConnection, setPendingConnection] = useState<PendingConnection | null>(null);
@@ -103,8 +103,12 @@ const TopologyCanvasInner: React.FC = () => {
       if (change.type === 'position' && change.position && change.dragging === false && change.id) {
         updatePosition(change.id, change.position.x, change.position.y);
       }
+      if (change.type === 'remove') {
+        removeDevice(change.id);
+        toast.success('Device removed');
+      }
     });
-  }, [updatePosition]);
+  }, [updatePosition, removeDevice]);
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     setLocalEdges(eds => applyEdgeChanges(changes, eds));
