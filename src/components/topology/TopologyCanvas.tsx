@@ -103,8 +103,12 @@ const TopologyCanvasInner: React.FC = () => {
       if (change.type === 'position' && change.position && change.dragging === false && change.id) {
         updatePosition(change.id, change.position.x, change.position.y);
       }
+      if (change.type === 'remove') {
+        removeDevice(change.id);
+        toast.success('Device removed');
+      }
     });
-  }, [updatePosition]);
+  }, [updatePosition, removeDevice]);
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     setLocalEdges(eds => applyEdgeChanges(changes, eds));
