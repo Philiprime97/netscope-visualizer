@@ -210,7 +210,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               placeholder="192.168.1.0/24"
               className="h-8 text-xs font-mono"
             />
-            <Button size="sm" className="h-8 text-xs gap-1.5" onClick={handleScan} disabled={scanning}>
+            <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => handleScan()} disabled={scanning}>
               {scanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
               {scanning ? 'Scanning...' : 'Scan'}
             </Button>
