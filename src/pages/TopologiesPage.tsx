@@ -92,6 +92,7 @@ const TopologiesPage: React.FC = () => {
       links: [],
       positions: {},
     };
+    setTopologies(prev => [...prev, empty]);
     sessionStorage.setItem('netscope-load-topology', JSON.stringify(empty));
     navigate('/');
     toast.success(`Created "${name}" — add devices to get started`);
