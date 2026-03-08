@@ -58,11 +58,7 @@ const Index: React.FC = () => {
 
   if (!user) return <Login />;
 
-  return (
-    <TopologyProvider>
-      <TopologyView />
-    </TopologyProvider>
-  );
+  return <TopologyView />;
 };
 
 export default Index;
