@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { NetworkDevice, NetworkLink, DeviceInterface } from '@/types/network';
 import { mockDevices, mockLinks, mockPositions } from '@/data/mockData';
 
+export interface TextAnnotation {
+  id: string;
+  text: string;
+}
+
 export interface SavedTopology {
   id: string;
   name: string;
@@ -10,6 +15,7 @@ export interface SavedTopology {
   links: NetworkLink[];
   positions: Record<string, { x: number; y: number }>;
   notes?: string;
+  annotations?: TextAnnotation[];
 }
 
 interface TopologyContextValue {
@@ -20,6 +26,7 @@ interface TopologyContextValue {
   selectedLinkId: string | null;
   showLabels: boolean;
   showAnimations: boolean;
+  annotations: TextAnnotation[];
   setSelectedDeviceId: (id: string | null) => void;
   setSelectedLinkId: (id: string | null) => void;
   setShowLabels: (v: boolean) => void;
@@ -39,6 +46,9 @@ interface TopologyContextValue {
   loadTopology: (topology: SavedTopology) => void;
   notes: string;
   setNotes: (notes: string) => void;
+  addAnnotation: (annotation: TextAnnotation, pos: { x: number; y: number }) => void;
+  updateAnnotation: (id: string, text: string) => void;
+  removeAnnotation: (id: string) => void;
 }
 
 const TopologyContext = createContext<TopologyContextValue | null>(null);
@@ -58,6 +68,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [showLabels, setShowLabels] = useState(true);
   const [showAnimations, setShowAnimations] = useState(true);
   const [notes, setNotes] = useState('');
+  const [annotations, setAnnotations] = useState<TextAnnotation[]>([]);
 
   const updatePosition = useCallback((id: string, x: number, y: number) => {
     setPositions(p => ({ ...p, [id]: { x, y } }));
@@ -119,6 +130,20 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return links.filter(l => l.sourceDeviceId === deviceId || l.targetDeviceId === deviceId).length;
   }, [links]);
 
+  const addAnnotation = useCallback((annotation: TextAnnotation, pos: { x: number; y: number }) => {
+    setAnnotations(a => [...a, annotation]);
+    setPositions(p => ({ ...p, [annotation.id]: pos }));
+  }, []);
+
+  const updateAnnotation = useCallback((id: string, text: string) => {
+    setAnnotations(a => a.map(ann => ann.id === id ? { ...ann, text } : ann));
+  }, []);
+
+  const removeAnnotation = useCallback((id: string) => {
+    setAnnotations(a => a.filter(ann => ann.id !== id));
+    setPositions(p => { const next = { ...p }; delete next[id]; return next; });
+  }, []);
+
   const exportTopology = useCallback((): SavedTopology => {
     return {
       id: `topo-${Date.now()}`,
@@ -128,14 +153,16 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       links,
       positions,
       notes,
+      annotations,
     };
-  }, [devices, links, positions, notes]);
+  }, [devices, links, positions, notes, annotations]);
 
   const loadTopology = useCallback((topology: SavedTopology) => {
     setDevices(topology.devices);
     setLinks(topology.links);
     setPositions(topology.positions);
     setNotes(topology.notes || '');
+    setAnnotations(topology.annotations || []);
     setSelectedDeviceId(null);
     setSelectedLinkId(null);
   }, []);
@@ -143,13 +170,14 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   return (
     <TopologyContext.Provider value={{
       devices, links, positions, selectedDeviceId, selectedLinkId,
-      showLabels, showAnimations,
+      showLabels, showAnimations, annotations,
       setSelectedDeviceId, setSelectedLinkId, setShowLabels, setShowAnimations,
       updatePosition, addDevice, removeDevice, updateDevice,
       updateInterface, addInterface, removeInterface,
       addLink, removeLink, updateLink, getConnectionCount,
       exportTopology, loadTopology,
       notes, setNotes,
+      addAnnotation, updateAnnotation, removeAnnotation,
     }}>
       {children}
     </TopologyContext.Provider>
