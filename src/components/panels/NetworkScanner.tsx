@@ -253,11 +253,19 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               {newHosts.length > 0 && <Badge className="text-[10px]">{newHosts.length} new</Badge>}
               {knownHosts.length > 0 && <Badge variant="outline" className="text-[10px]">{knownHosts.length} known</Badge>}
               {hosts.some(h => h.snmp) && <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-400 border-emerald-500/30">SNMP</Badge>}
-              {newHosts.filter(h => !added.has(h.ip)).length > 0 && (
-                <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1 ml-auto" onClick={handleAddAll}>
-                  <Plus className="w-3 h-3" /> Add All New
+              <div className="ml-auto flex items-center gap-1">
+                <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => handleScan(true)} disabled={scanning}>
+                  <RefreshCw className={`w-3 h-3 ${scanning ? 'animate-spin' : ''}`} /> Rediscover
                 </Button>
-              )}
+                <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={handleClearResults}>
+                  <X className="w-3 h-3" /> Clear
+                </Button>
+                {newHosts.filter(h => !added.has(h.ip)).length > 0 && (
+                  <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={handleAddAll}>
+                    <Plus className="w-3 h-3" /> Add All New
+                  </Button>
+                )}
+              </div>
             </div>
 
             {newHosts.length > 0 && (
