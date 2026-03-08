@@ -40,6 +40,8 @@ export interface NetworkDevice {
   maxConnections: number;
   customIcon?: string;
   customColor?: string;
+  latency?: number; // ms from last ping
+  uptimeHistory?: { time: string; up: boolean }[];
 }
 
 export interface NetworkLink {
