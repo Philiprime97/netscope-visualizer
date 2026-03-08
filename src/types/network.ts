@@ -38,6 +38,8 @@ export interface NetworkDevice {
   parentServerId?: string; // for containers/pods
   containerImage?: string;
   maxConnections: number;
+  customIcon?: string;
+  customColor?: string;
 }
 
 export interface NetworkLink {

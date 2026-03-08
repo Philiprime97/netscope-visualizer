@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DeviceIcon, deviceTypeLabel } from '@/components/topology/DeviceIcons';
-import { X, Trash2, Terminal, Wifi, WifiOff, Plus, Pencil, Check, Loader2, Activity } from 'lucide-react';
+import { X, Trash2, Terminal, Wifi, WifiOff, Plus, Pencil, Check, Loader2, Activity, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { usePing } from '@/hooks/usePing';
+import DeviceAppearance from './DeviceAppearance';
 
 const formatBytes = (b: number) => {
   if (b > 1e9) return `${(b / 1e9).toFixed(1)} GB`;
@@ -29,6 +30,7 @@ const DevicePanel: React.FC = () => {
   const [editOs, setEditOs] = useState('');
   const [editingIfaceId, setEditingIfaceId] = useState<string | null>(null);
   const [editIfaceName, setEditIfaceName] = useState('');
+  const [showAppearance, setShowAppearance] = useState(false);
 
   if (!device) return null;
 
@@ -68,7 +70,7 @@ const DevicePanel: React.FC = () => {
       {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-3">
-          <DeviceIcon type={device.type} size={24} />
+          <DeviceIcon type={device.type} size={24} customIcon={device.customIcon} customColor={device.customColor} />
           <div>
             {editing ? (
               <Input value={editHostname} onChange={e => setEditHostname(e.target.value)} className="h-7 text-sm font-semibold w-[160px]" />
@@ -79,6 +81,11 @@ const DevicePanel: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {isAdmin && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowAppearance(s => !s)} title="Customize appearance">
+              <Palette className="w-3.5 h-3.5" />
+            </Button>
+          )}
           {isAdmin && !editing && (
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={startEdit}>
               <Pencil className="w-3.5 h-3.5" />
@@ -102,6 +109,19 @@ const DevicePanel: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Appearance */}
+      {showAppearance && isAdmin && (
+        <div className="p-4 border-b border-border">
+          <DeviceAppearance
+            deviceType={device.type}
+            currentIcon={device.customIcon}
+            currentColor={device.customColor}
+            onIconChange={(name) => updateDevice(device.id, { customIcon: name })}
+            onColorChange={(color) => updateDevice(device.id, { customColor: color })}
+          />
+        </div>
+      )}
 
       {/* Info */}
       <div className="p-4 space-y-3">
