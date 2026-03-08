@@ -212,7 +212,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             />
             <Button size="sm" className="h-8 text-xs gap-1.5" onClick={() => handleScan()} disabled={scanning}>
               {scanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
-              {scanning ? 'Scanning...' : 'Scan'}
+              {scanning ? 'Pinging...' : 'Ping'}
             </Button>
           </div>
         </div>
