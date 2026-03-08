@@ -577,7 +577,14 @@ def scan():
 if __name__ == '__main__':
     print("NetScope Agent running on http://localhost:5111")
     if SNMP_AVAILABLE:
-        print("  ✓ SNMP support enabled (pysnmp installed)")
+        print("  ✓ SNMP support enabled (pysnmp)")
     else:
-        print("  ✗ SNMP support disabled (install pysnmp: pip install pysnmp)")
+        print("  ✗ SNMP disabled (pip install pysnmp)")
+    if PSUTIL_AVAILABLE:
+        print("  ✓ Local metrics enabled (psutil)")
+        # Start background traffic collection
+        t = threading.Thread(target=collect_traffic, daemon=True)
+        t.start()
+    else:
+        print("  ✗ Local metrics disabled (pip install psutil)")
     app.run(host='0.0.0.0', port=5111, debug=False)
