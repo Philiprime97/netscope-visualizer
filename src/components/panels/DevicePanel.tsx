@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DeviceIcon, deviceTypeLabel } from '@/components/topology/DeviceIcons';
-import { X, Trash2, Terminal, Wifi, WifiOff, Plus, Pencil, Check, Loader2, Activity } from 'lucide-react';
+import { X, Trash2, Terminal, Wifi, WifiOff, Plus, Pencil, Check, Loader2, Activity, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { usePing } from '@/hooks/usePing';
+import DeviceAppearance from './DeviceAppearance';
 
 const formatBytes = (b: number) => {
   if (b > 1e9) return `${(b / 1e9).toFixed(1)} GB`;
