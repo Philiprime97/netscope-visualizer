@@ -46,6 +46,8 @@ export interface NetworkLink {
   sourceInterfaceId: string;
   targetDeviceId: string;
   targetInterfaceId: string;
+  sourceHandle?: string;
+  targetHandle?: string;
   speed: LinkSpeed;
   vlan?: number;
   linkType: LinkType;
