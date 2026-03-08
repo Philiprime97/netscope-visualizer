@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import { NetworkDevice, NetworkLink, DeviceInterface } from '@/types/network';
 import { mockDevices, mockLinks, mockPositions } from '@/data/mockData';
 
+export interface SavedTopology {
+  id: string;
+  name: string;
+  savedAt: string;
+  devices: NetworkDevice[];
+  links: NetworkLink[];
+  positions: Record<string, { x: number; y: number }>;
+}
+
 interface TopologyContextValue {
   devices: NetworkDevice[];
   links: NetworkLink[];
@@ -25,6 +34,8 @@ interface TopologyContextValue {
   removeLink: (id: string) => void;
   updateLink: (id: string, updates: Partial<NetworkLink>) => void;
   getConnectionCount: (deviceId: string) => number;
+  exportTopology: () => SavedTopology;
+  loadTopology: (topology: SavedTopology) => void;
 }
 
 const TopologyContext = createContext<TopologyContextValue | null>(null);
@@ -104,6 +115,25 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return links.filter(l => l.sourceDeviceId === deviceId || l.targetDeviceId === deviceId).length;
   }, [links]);
 
+  const exportTopology = useCallback((): SavedTopology => {
+    return {
+      id: `topo-${Date.now()}`,
+      name: `Topology ${new Date().toLocaleDateString()}`,
+      savedAt: new Date().toISOString(),
+      devices,
+      links,
+      positions,
+    };
+  }, [devices, links, positions]);
+
+  const loadTopology = useCallback((topology: SavedTopology) => {
+    setDevices(topology.devices);
+    setLinks(topology.links);
+    setPositions(topology.positions);
+    setSelectedDeviceId(null);
+    setSelectedLinkId(null);
+  }, []);
+
   return (
     <TopologyContext.Provider value={{
       devices, links, positions, selectedDeviceId, selectedLinkId,
@@ -112,6 +142,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updatePosition, addDevice, removeDevice, updateDevice,
       updateInterface, addInterface, removeInterface,
       addLink, removeLink, updateLink, getConnectionCount,
+      exportTopology, loadTopology,
     }}>
       {children}
     </TopologyContext.Provider>
