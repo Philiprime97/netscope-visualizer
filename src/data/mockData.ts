@@ -1,11 +1,26 @@
-import { NetworkDevice, NetworkLink } from '@/types/network';
+import { NetworkDevice, NetworkLink, DeviceInterface } from '@/types/network';
 
-const makeIf = (id: string, name: string, type: any = 'gigabit', speed: any = '1G', status: any = 'up', ip?: string, mac?: string, vlan?: number): any => ({
+const makeIf = (id: string, name: string, type: any = 'gigabit', speed: any = '1G', status: any = 'up', ip?: string, mac?: string, vlan?: number): DeviceInterface => ({
   id, name, type, speed, status, ipAddress: ip, macAddress: mac, vlan,
   rxBytes: Math.floor(Math.random() * 5e9),
   txBytes: Math.floor(Math.random() * 5e9),
   enabled: true,
 });
+
+// Generate interfaces to reach 100 total per device
+const padInterfaces = (deviceId: string, existing: DeviceInterface[], prefix: string, type: any = 'gigabit', speed: any = '1G'): DeviceInterface[] => {
+  const result = [...existing];
+  for (let i = result.length; i < 100; i++) {
+    result.push(makeIf(
+      `${deviceId}-port${i}`,
+      `${prefix}${i}`,
+      type,
+      speed,
+      Math.random() > 0.3 ? 'up' : 'down',
+    ));
+  }
+  return result;
+};
 
 export const mockDevices: NetworkDevice[] = [
   {
