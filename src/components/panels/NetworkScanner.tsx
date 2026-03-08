@@ -195,7 +195,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       <div className="p-4 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-2">
           <Radar className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Network Ping</h2>
+          <h2 className="text-sm font-semibold">Network Scanner</h2>
         </div>
         <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onClose}>Close</Button>
       </div>
