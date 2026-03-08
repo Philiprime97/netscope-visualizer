@@ -67,6 +67,20 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         <BarChart3 className="w-3.5 h-3.5" />
         Dashboard
       </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => navigate('/topologies')}>
+        <FolderOpen className="w-3.5 h-3.5" />
+        Topologies
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
+        const topo = exportTopology();
+        const existing = JSON.parse(localStorage.getItem('netscope-saved-topologies') || '[]');
+        existing.push(topo);
+        localStorage.setItem('netscope-saved-topologies', JSON.stringify(existing));
+        toast.success(`Saved "${topo.name}"`);
+      }}>
+        <Save className="w-3.5 h-3.5" />
+        Save
+      </Button>
 
       <Separator orientation="vertical" className="h-6" />
 
