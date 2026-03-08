@@ -9,14 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
   Network, Server, Box, Hexagon, AlertTriangle, ArrowLeft,
-  Cpu, HardDrive, Activity, Wifi, WifiOff, TrendingUp
+  Cpu, HardDrive, Activity, Wifi, WifiOff, TrendingUp, MonitorSmartphone
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area, RadialBarChart, RadialBar,
+  PieChart, Pie, Cell, AreaChart, Area,
   Legend
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { useLocalMetrics } from '@/hooks/useLocalMetrics';
 
 const CHART_COLORS = {
   primary: 'hsl(185, 80%, 50%)',
@@ -28,12 +29,22 @@ const CHART_COLORS = {
   success: 'hsl(150, 70%, 45%)',
   destructive: 'hsl(0, 72%, 55%)',
   muted: 'hsl(215, 15%, 50%)',
+  rx: 'hsl(185, 80%, 50%)',
+  tx: 'hsl(280, 70%, 60%)',
+};
+
+const formatBytes = (b: number) => {
+  if (b > 1e12) return `${(b / 1e12).toFixed(1)} TB`;
+  if (b > 1e9) return `${(b / 1e9).toFixed(1)} GB`;
+  if (b > 1e6) return `${(b / 1e6).toFixed(1)} MB`;
+  return `${(b / 1e3).toFixed(1)} KB`;
 };
 
 const Dashboard: React.FC = () => {
   const { devices, links } = useTopology();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const { metrics: localMetrics, trafficHistory, connected: agentConnected } = useLocalMetrics(5000);
 
   const totalDevices = devices.length;
   const upDevices = devices.filter(d => d.status === 'up').length;
@@ -60,13 +71,6 @@ const Dashboard: React.FC = () => {
     { name: 'K8s Pods', value: k8sPods.length, color: CHART_COLORS.kubernetes },
   ];
 
-  // Simulated traffic over time
-  const trafficData = Array.from({ length: 12 }, (_, i) => ({
-    time: `${(i * 2).toString().padStart(2, '0')}:00`,
-    inbound: Math.floor(Math.random() * 800 + 200),
-    outbound: Math.floor(Math.random() * 600 + 100),
-  }));
-
   // Container resource usage
   const containerResourceData = containers.map(c => ({
     name: c.hostname.length > 12 ? c.hostname.slice(0, 12) + '…' : c.hostname,
@@ -82,8 +86,8 @@ const Dashboard: React.FC = () => {
   }, {} as Record<string, number>);
   const speedData = Object.entries(speedDist).map(([speed, count]) => ({ name: speed, value: count }));
 
-  const avgCpu = Math.round(devices.reduce((s, d) => s + d.cpu, 0) / totalDevices);
-  const avgMem = Math.round(devices.reduce((s, d) => s + d.memory, 0) / totalDevices);
+  const avgCpu = totalDevices ? Math.round(devices.reduce((s, d) => s + d.cpu, 0) / totalDevices) : 0;
+  const avgMem = totalDevices ? Math.round(devices.reduce((s, d) => s + d.memory, 0) / totalDevices) : 0;
 
   const tooltipStyle = {
     contentStyle: { background: 'hsl(220, 18%, 10%)', border: '1px solid hsl(220, 15%, 18%)', borderRadius: 8, fontSize: 12 },
@@ -101,6 +105,10 @@ const Dashboard: React.FC = () => {
         <span className="text-sm font-bold tracking-tight">NetScope</span>
         <Separator orientation="vertical" className="h-6" />
         <span className="text-xs text-muted-foreground">Monitoring Dashboard</span>
+        <div className="flex items-center gap-2 ml-3">
+          <div className={`w-2 h-2 rounded-full ${agentConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+          <span className="text-[10px] text-muted-foreground">{agentConnected ? 'Agent connected' : 'Agent offline'}</span>
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <Badge variant="outline" className="text-[10px] h-5">{user?.role}</Badge>
           <span className="text-xs text-muted-foreground">{user?.username}</span>
@@ -109,7 +117,7 @@ const Dashboard: React.FC = () => {
 
       <div className="p-6 space-y-6 max-w-[1600px] mx-auto">
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
           <KpiCard icon={<Server className="w-4 h-4" />} label="Devices" value={totalDevices} />
           <KpiCard icon={<Wifi className="w-4 h-4 text-success" />} label="Up" value={upDevices} variant="success" />
           <KpiCard icon={<WifiOff className="w-4 h-4 text-destructive" />} label="Down" value={downDevices} variant="destructive" />
@@ -117,32 +125,61 @@ const Dashboard: React.FC = () => {
           <KpiCard icon={<Box className="w-4 h-4 text-noc-container" />} label="Docker" value={dockerContainers.length} />
           <KpiCard icon={<Hexagon className="w-4 h-4 text-noc-kubernetes" />} label="K8s Pods" value={k8sPods.length} />
           <KpiCard icon={<AlertTriangle className="w-4 h-4 text-warning" />} label="Alerts" value={alerts.length} variant={alerts.length > 0 ? 'warning' : undefined} />
+          <KpiCard icon={<MonitorSmartphone className="w-4 h-4 text-primary" />} label="Host CPU" value={localMetrics?.cpu ?? 0} suffix="%" />
         </div>
 
-        {/* Avg gauges + Category Pie */}
+        {/* Local machine metrics + Category Pie + Link speeds */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Local machine */}
           <Card className="glass-panel border-border">
-            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Average Resource Usage</CardTitle></CardHeader>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <MonitorSmartphone className="w-3.5 h-3.5" /> Local Machine (Live)
+              </CardTitle>
+            </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="flex items-center gap-1.5"><Cpu className="w-3 h-3 text-primary" /> CPU</span>
-                  <span className="font-mono">{avgCpu}%</span>
+              {agentConnected && localMetrics ? (
+                <>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="flex items-center gap-1.5"><Cpu className="w-3 h-3 text-primary" /> CPU</span>
+                      <span className="font-mono font-bold">{localMetrics.cpu}%</span>
+                    </div>
+                    <Progress value={localMetrics.cpu} className="h-2.5" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs">
+                      <span className="flex items-center gap-1.5"><HardDrive className="w-3 h-3 text-accent" /> RAM</span>
+                      <span className="font-mono font-bold">{localMetrics.memory}%</span>
+                    </div>
+                    <Progress value={localMetrics.memory} className="h-2.5" />
+                  </div>
+                  <Separator />
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div>
+                      <span className="text-muted-foreground">RAM Used</span>
+                      <div className="font-mono text-foreground">{formatBytes(localMetrics.memoryUsed)}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">RAM Total</span>
+                      <div className="font-mono text-foreground">{formatBytes(localMetrics.memoryTotal)}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Net Sent</span>
+                      <div className="font-mono text-foreground">{formatBytes(localMetrics.netBytesSent)}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Net Recv</span>
+                      <div className="font-mono text-foreground">{formatBytes(localMetrics.netBytesRecv)}</div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center py-6 text-xs text-muted-foreground">
+                  <p>Agent not connected</p>
+                  <p className="text-[10px] mt-1">Run: <span className="font-mono">pip install psutil && python agent.py</span></p>
                 </div>
-                <Progress value={avgCpu} className="h-2" />
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span className="flex items-center gap-1.5"><HardDrive className="w-3 h-3 text-accent" /> Memory</span>
-                  <span className="font-mono">{avgMem}%</span>
-                </div>
-                <Progress value={avgMem} className="h-2" />
-              </div>
-              <Separator />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Links Up: {upLinks}</span>
-                <span>Links Down: {downLinks}</span>
-              </div>
+              )}
             </CardContent>
           </Card>
 
@@ -162,22 +199,74 @@ const Dashboard: React.FC = () => {
           </Card>
 
           <Card className="glass-panel border-border">
-            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Link Speed Distribution</CardTitle></CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={speedData}>
-                  <XAxis dataKey="name" tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip {...tooltipStyle} />
-                  <Bar dataKey="value" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">
+                Avg Topology Resources
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="flex items-center gap-1.5"><Cpu className="w-3 h-3 text-primary" /> Avg CPU</span>
+                  <span className="font-mono">{avgCpu}%</span>
+                </div>
+                <Progress value={avgCpu} className="h-2" />
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="flex items-center gap-1.5"><HardDrive className="w-3 h-3 text-accent" /> Avg Memory</span>
+                  <span className="font-mono">{avgMem}%</span>
+                </div>
+                <Progress value={avgMem} className="h-2" />
+              </div>
+              <Separator />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Links Up: {upLinks}</span>
+                <span>Links Down: {downLinks}</span>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* CPU/Mem per device */}
+        {/* Network Traffic (Live) + CPU/Mem per device */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="glass-panel border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5" />
+                Network Traffic — Local Machine {agentConnected && <Badge variant="outline" className="text-[9px] h-4 ml-1 bg-green-500/10 text-green-400 border-green-500/30">LIVE</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {trafficHistory.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={trafficHistory}>
+                    <defs>
+                      <linearGradient id="rxGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={CHART_COLORS.rx} stopOpacity={0.4} />
+                        <stop offset="95%" stopColor={CHART_COLORS.rx} stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="txGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={CHART_COLORS.tx} stopOpacity={0.4} />
+                        <stop offset="95%" stopColor={CHART_COLORS.tx} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="time" tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <Tooltip {...tooltipStyle} formatter={(value: number) => `${value.toFixed(2)} Mbps`} />
+                    <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                    <Area type="monotone" dataKey="rxMbps" name="Download (Mbps)" stroke={CHART_COLORS.rx} fill="url(#rxGrad)" strokeWidth={2} />
+                    <Area type="monotone" dataKey="txMbps" name="Upload (Mbps)" stroke={CHART_COLORS.tx} fill="url(#txGrad)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-xs text-muted-foreground">
+                  {agentConnected ? 'Collecting traffic data... (takes ~10 seconds)' : 'Agent offline — start agent for live traffic'}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card className="glass-panel border-border">
             <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">CPU & Memory by Device</CardTitle></CardHeader>
             <CardContent>
@@ -193,50 +282,40 @@ const Dashboard: React.FC = () => {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+        </div>
 
+        {/* Link speed + Container resources */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="glass-panel border-border">
-            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5" /> Network Traffic (Simulated)</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Link Speed Distribution</CardTitle></CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
-                <AreaChart data={trafficData}>
-                  <defs>
-                    <linearGradient id="inGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
-                      <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="outGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={CHART_COLORS.endpoint} stopOpacity={0.4} />
-                      <stop offset="95%" stopColor={CHART_COLORS.endpoint} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="time" tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={speedData}>
+                  <XAxis dataKey="name" tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} />
                   <Tooltip {...tooltipStyle} />
+                  <Bar dataKey="value" fill={CHART_COLORS.primary} radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-panel border-border">
+            <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Container & Pod Resource Usage</CardTitle></CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={containerResourceData} barGap={2}>
+                  <XAxis dataKey="name" tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                  <Tooltip {...tooltipStyle} />
                   <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                  <Area type="monotone" dataKey="inbound" name="Inbound (Mbps)" stroke={CHART_COLORS.primary} fill="url(#inGrad)" strokeWidth={2} />
-                  <Area type="monotone" dataKey="outbound" name="Outbound (Mbps)" stroke={CHART_COLORS.endpoint} fill="url(#outGrad)" strokeWidth={2} />
-                </AreaChart>
+                  <Bar dataKey="cpu" name="CPU %" fill={CHART_COLORS.container} radius={[3, 3, 0, 0]} />
+                  <Bar dataKey="memory" name="Memory %" fill={CHART_COLORS.kubernetes} radius={[3, 3, 0, 0]} />
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
-
-        {/* Container resources */}
-        <Card className="glass-panel border-border">
-          <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">Container & Pod Resource Usage</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={containerResourceData} barGap={2}>
-                <XAxis dataKey="name" tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 100]} />
-                <Tooltip {...tooltipStyle} />
-                <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="cpu" name="CPU %" fill={CHART_COLORS.container} radius={[3, 3, 0, 0]} />
-                <Bar dataKey="memory" name="Memory %" fill={CHART_COLORS.kubernetes} radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
 
         {/* Alerts table */}
         {alerts.length > 0 && (
@@ -263,12 +342,14 @@ const Dashboard: React.FC = () => {
   );
 };
 
-const KpiCard: React.FC<{ icon: React.ReactNode; label: string; value: number; variant?: string }> = ({ icon, label, value, variant }) => (
+const KpiCard: React.FC<{ icon: React.ReactNode; label: string; value: number; variant?: string; suffix?: string }> = ({ icon, label, value, variant, suffix }) => (
   <Card className="glass-panel border-border">
     <CardContent className="p-3 flex items-center gap-2.5">
       {icon}
       <div>
-        <div className={`text-lg font-bold font-mono ${variant === 'destructive' ? 'text-destructive' : variant === 'success' ? 'text-success' : variant === 'warning' ? 'text-warning' : 'text-foreground'}`}>{value}</div>
+        <div className={`text-lg font-bold font-mono ${variant === 'destructive' ? 'text-destructive' : variant === 'success' ? 'text-success' : variant === 'warning' ? 'text-warning' : 'text-foreground'}`}>
+          {value}{suffix}
+        </div>
         <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</div>
       </div>
     </CardContent>

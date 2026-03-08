@@ -1,8 +1,8 @@
 """
-NetScope Local Agent - Run this on your machine to enable ping, SNMP & network scanning.
+NetScope Local Agent - Run this on your machine to enable ping, SNMP, metrics & network scanning.
 
 Usage:
-  pip install flask flask-cors pysnmp
+  pip install flask flask-cors pysnmp psutil
   python agent.py
 
 The agent runs on http://localhost:5111
@@ -15,6 +15,15 @@ import platform
 import re
 import socket
 import concurrent.futures
+import time
+import threading
+
+# Try psutil for local machine metrics
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 app = Flask(__name__)
 CORS(app)
@@ -225,6 +234,88 @@ def guess_type_from_snmp(sys_descr, sys_oid):
     return None
 
 
+# ── Local machine metrics ─────────────────────────────────────────────
+
+# Traffic history buffer (keeps last 60 samples at ~5s intervals = 5 min)
+traffic_history = []
+traffic_lock = threading.Lock()
+
+def collect_traffic():
+    """Background thread collecting network I/O every 5 seconds."""
+    if not PSUTIL_AVAILABLE:
+        return
+    prev = psutil.net_io_counters()
+    prev_time = time.time()
+    while True:
+        time.sleep(5)
+        curr = psutil.net_io_counters()
+        curr_time = time.time()
+        dt = curr_time - prev_time
+        rx_rate = (curr.bytes_recv - prev.bytes_recv) / dt  # bytes/s
+        tx_rate = (curr.bytes_sent - prev.bytes_sent) / dt
+        sample = {
+            'timestamp': int(curr_time * 1000),
+            'rxBytesPerSec': round(rx_rate),
+            'txBytesPerSec': round(tx_rate),
+            'rxMbps': round(rx_rate * 8 / 1_000_000, 2),
+            'txMbps': round(tx_rate * 8 / 1_000_000, 2),
+        }
+        with traffic_lock:
+            traffic_history.append(sample)
+            # Keep last 120 samples (10 min)
+            if len(traffic_history) > 120:
+                traffic_history.pop(0)
+        prev = curr
+        prev_time = curr_time
+
+
+# SNMP CPU/Memory OIDs (Host Resources MIB)
+SNMP_CPU_OID = '1.3.6.1.2.1.25.3.3.1.2'       # hrProcessorLoad
+SNMP_STORAGE_TYPE = '1.3.6.1.2.1.25.2.3.1.2'   # hrStorageType
+SNMP_STORAGE_DESCR = '1.3.6.1.2.1.25.2.3.1.3'  # hrStorageDescr
+SNMP_STORAGE_SIZE = '1.3.6.1.2.1.25.2.3.1.5'    # hrStorageSize
+SNMP_STORAGE_USED = '1.3.6.1.2.1.25.2.3.1.6'    # hrStorageUsed
+SNMP_STORAGE_UNIT = '1.3.6.1.2.1.25.2.3.1.4'    # hrStorageAllocationUnits
+SNMP_RAM_TYPE = '1.3.6.1.2.1.25.2.1.2'          # hrStorageRam
+
+
+def snmp_get_cpu_usage(ip, community):
+    """Get average CPU usage via SNMP hrProcessorLoad."""
+    if not SNMP_AVAILABLE:
+        return None
+    loads = snmp_walk(ip, community, SNMP_CPU_OID)
+    if not loads:
+        return None
+    values = []
+    for entry in loads:
+        try:
+            values.append(int(entry['value']))
+        except (ValueError, TypeError):
+            pass
+    return round(sum(values) / len(values)) if values else None
+
+
+def snmp_get_memory_usage(ip, community):
+    """Get RAM usage via SNMP hrStorage."""
+    if not SNMP_AVAILABLE:
+        return None
+    types = snmp_walk(ip, community, SNMP_STORAGE_TYPE)
+    sizes = snmp_walk(ip, community, SNMP_STORAGE_SIZE)
+    useds = snmp_walk(ip, community, SNMP_STORAGE_USED)
+    units = snmp_walk(ip, community, SNMP_STORAGE_UNIT)
+
+    for i, t in enumerate(types):
+        if SNMP_RAM_TYPE in t.get('value', ''):
+            try:
+                size = int(sizes[i]['value'])
+                used = int(useds[i]['value'])
+                if size > 0:
+                    return round(used / size * 100)
+            except (IndexError, ValueError, TypeError, ZeroDivisionError):
+                pass
+    return None
+
+
 # ── Core scanning ────────────────────────────────────────────────────
 
 @app.route('/health', methods=['GET'])
@@ -233,6 +324,50 @@ def health():
         'status': 'ok',
         'platform': platform.system(),
         'snmp': SNMP_AVAILABLE,
+        'psutil': PSUTIL_AVAILABLE,
+    })
+
+
+@app.route('/metrics/local', methods=['GET'])
+def local_metrics():
+    """Get CPU, RAM and network traffic from the local machine."""
+    if not PSUTIL_AVAILABLE:
+        return jsonify({'error': 'psutil not installed. Run: pip install psutil'}), 400
+
+    cpu_percent = psutil.cpu_percent(interval=0.5)
+    mem = psutil.virtual_memory()
+    net = psutil.net_io_counters()
+
+    with traffic_lock:
+        history = list(traffic_history)
+
+    return jsonify({
+        'cpu': round(cpu_percent),
+        'memory': round(mem.percent),
+        'memoryTotal': mem.total,
+        'memoryUsed': mem.used,
+        'netBytesSent': net.bytes_sent,
+        'netBytesRecv': net.bytes_recv,
+        'trafficHistory': history,
+    })
+
+
+@app.route('/metrics/snmp', methods=['POST'])
+def snmp_metrics():
+    """Get CPU & RAM from a remote device via SNMP."""
+    ip = request.json.get('ip', '')
+    community = request.json.get('community', 'public')
+
+    if not SNMP_AVAILABLE:
+        return jsonify({'error': 'pysnmp not installed'}), 400
+
+    cpu = snmp_get_cpu_usage(ip, community)
+    memory = snmp_get_memory_usage(ip, community)
+
+    return jsonify({
+        'ip': ip,
+        'cpu': cpu,
+        'memory': memory,
     })
 
 
@@ -442,7 +577,14 @@ def scan():
 if __name__ == '__main__':
     print("NetScope Agent running on http://localhost:5111")
     if SNMP_AVAILABLE:
-        print("  ✓ SNMP support enabled (pysnmp installed)")
+        print("  ✓ SNMP support enabled (pysnmp)")
     else:
-        print("  ✗ SNMP support disabled (install pysnmp: pip install pysnmp)")
+        print("  ✗ SNMP disabled (pip install pysnmp)")
+    if PSUTIL_AVAILABLE:
+        print("  ✓ Local metrics enabled (psutil)")
+        # Start background traffic collection
+        t = threading.Thread(target=collect_traffic, daemon=True)
+        t.start()
+    else:
+        print("  ✗ Local metrics disabled (pip install psutil)")
     app.run(host='0.0.0.0', port=5111, debug=False)
