@@ -9,6 +9,7 @@ export interface SavedTopology {
   devices: NetworkDevice[];
   links: NetworkLink[];
   positions: Record<string, { x: number; y: number }>;
+  notes?: string;
 }
 
 interface TopologyContextValue {
