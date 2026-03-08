@@ -36,7 +36,7 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
     let upCount = 0;
     let downCount = 0;
     const results = await Promise.all(
-      devices.map(d => pingDevice(d.ipAddress).then(r => ({ id: d.id, ...r })))
+      devices.map(d => pingDevice(d.ipAddress).then(r => ({ id: d.id, device: d, ...r })))
     );
     for (const r of results) {
       if (r.error) {
@@ -44,7 +44,14 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         setScanningAll(false);
         return;
       }
-      updateDevice(r.id, { status: r.reachable ? 'up' : 'down' });
+      const now = new Date().toLocaleTimeString();
+      const history = [...(r.device.uptimeHistory || []), { time: now, up: !!r.reachable }].slice(-20);
+      const latency = r.output?.match(/time[=<](\d+\.?\d*)/)?.[1];
+      updateDevice(r.id, {
+        status: r.reachable ? 'up' : 'down',
+        latency: latency ? parseFloat(latency) : undefined,
+        uptimeHistory: history,
+      });
       if (r.reachable) upCount++; else downCount++;
     }
     toast.success(`Scan complete: ${upCount} up, ${downCount} down`);
