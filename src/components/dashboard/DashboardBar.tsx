@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar } from 'lucide-react';
+import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2 } from 'lucide-react';
+import { pingDevice } from '@/services/pingAgent';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,9 +23,31 @@ interface DashboardBarProps {
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner }) => {
   const navigate = useNavigate();
-  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, exportTopology, loadTopology } = useTopology();
+  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
   const { user, logout, isAdmin } = useAuth();
+  const [scanningAll, setScanningAll] = useState(false);
+
+  const handlePingAll = async () => {
+    setScanningAll(true);
+    toast.info(`Pinging ${devices.length} devices...`);
+    let upCount = 0;
+    let downCount = 0;
+    const results = await Promise.all(
+      devices.map(d => pingDevice(d.ipAddress).then(r => ({ id: d.id, ...r })))
+    );
+    for (const r of results) {
+      if (r.error) {
+        toast.error(r.error);
+        setScanningAll(false);
+        return;
+      }
+      updateDevice(r.id, { status: r.reachable ? 'up' : 'down' });
+      if (r.reachable) upCount++; else downCount++;
+    }
+    toast.success(`Scan complete: ${upCount} up, ${downCount} down`);
+    setScanningAll(false);
+  };
 
   const totalDevices = devices.length;
   const upDevices = devices.filter(d => d.status === 'up').length;
@@ -121,7 +144,11 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
       </Button>
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={onToggleScanner}>
         <Radar className="w-3.5 h-3.5" />
-        Scan
+        Discover
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={handlePingAll} disabled={scanningAll}>
+        {scanningAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
+        {scanningAll ? 'Scanning...' : 'Scan'}
       </Button>
 
       <Separator orientation="vertical" className="h-6" />
