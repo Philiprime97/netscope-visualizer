@@ -48,10 +48,29 @@ const TopologyCanvas: React.FC = () => {
       const tgtDevice = devices.find(d => d.id === link.targetDeviceId);
       const srcIf = srcDevice?.interfaces.find(i => i.id === link.sourceInterfaceId);
       const tgtIf = tgtDevice?.interfaces.find(i => i.id === link.targetInterfaceId);
+      
+      // Determine best handle based on relative positions
+      const srcPos = positions[link.sourceDeviceId] || { x: 0, y: 0 };
+      const tgtPos = positions[link.targetDeviceId] || { x: 0, y: 0 };
+      const dx = tgtPos.x - srcPos.x;
+      const dy = tgtPos.y - srcPos.y;
+      
+      let sourceHandle = 'bottom';
+      let targetHandle = 'top';
+      if (Math.abs(dx) > Math.abs(dy)) {
+        sourceHandle = dx > 0 ? 'right' : 'left';
+        targetHandle = dx > 0 ? 'left' : 'right';
+      } else {
+        sourceHandle = dy > 0 ? 'bottom' : 'top';
+        targetHandle = dy > 0 ? 'top' : 'bottom';
+      }
+
       return {
         id: link.id,
         source: link.sourceDeviceId,
         target: link.targetDeviceId,
+        sourceHandle,
+        targetHandle,
         animated: showAnimations && link.status === 'up',
         label: showLabels ? `${srcIf?.name || '?'} ↔ ${tgtIf?.name || '?'}` : undefined,
         labelStyle: { fill: 'hsl(215, 15%, 50%)', fontSize: 10, fontFamily: 'JetBrains Mono' },
@@ -66,7 +85,7 @@ const TopologyCanvas: React.FC = () => {
         data: { link },
       };
     }),
-    [links, devices, showAnimations, showLabels]
+    [links, devices, showAnimations, showLabels, positions]
   );
 
   const [localNodes, setLocalNodes] = React.useState<Node[]>(nodes);
