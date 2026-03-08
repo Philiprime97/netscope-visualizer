@@ -10,13 +10,33 @@ import { Radar, Loader2, Plus, Check, ChevronDown, ChevronRight, Info } from 'lu
 import { toast } from 'sonner';
 import { DeviceIcon } from '@/components/topology/DeviceIcons';
 
+const SCANNER_CACHE_KEY = 'netscope-scanner-cache';
+
+interface ScannerCache {
+  hosts: DiscoveredHost[];
+  subnet: string;
+  added: string[];
+}
+
+const loadCache = (): ScannerCache | null => {
+  try {
+    const raw = sessionStorage.getItem(SCANNER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+
+const saveCache = (cache: ScannerCache) => {
+  sessionStorage.setItem(SCANNER_CACHE_KEY, JSON.stringify(cache));
+};
+
 const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const { devices, addDevice } = useTopology();
-  const [subnet, setSubnet] = useState('192.168.1.0/24');
+  const cache = loadCache();
+  const [subnet, setSubnet] = useState(cache?.subnet || '192.168.1.0/24');
   const [community, setCommunity] = useState('');
   const [scanning, setScanning] = useState(false);
-  const [hosts, setHosts] = useState<DiscoveredHost[]>([]);
-  const [added, setAdded] = useState<Set<string>>(new Set());
+  const [hosts, setHosts] = useState<DiscoveredHost[]>(cache?.hosts || []);
+  const [added, setAdded] = useState<Set<string>>(new Set(cache?.added || []));
   const [autoAdd, setAutoAdd] = useState(false);
 
   const existingIps = new Set(devices.map(d => d.ipAddress));
