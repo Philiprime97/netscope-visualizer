@@ -1,8 +1,8 @@
 """
-NetScope Local Agent - Run this on your machine to enable ping, SNMP & network scanning.
+NetScope Local Agent - Run this on your machine to enable ping, SNMP, metrics & network scanning.
 
 Usage:
-  pip install flask flask-cors pysnmp
+  pip install flask flask-cors pysnmp psutil
   python agent.py
 
 The agent runs on http://localhost:5111
@@ -15,6 +15,15 @@ import platform
 import re
 import socket
 import concurrent.futures
+import time
+import threading
+
+# Try psutil for local machine metrics
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 app = Flask(__name__)
 CORS(app)
