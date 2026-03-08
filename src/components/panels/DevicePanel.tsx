@@ -81,6 +81,11 @@ const DevicePanel: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {isAdmin && (
+            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowAppearance(s => !s)} title="Customize appearance">
+              <Palette className="w-3.5 h-3.5" />
+            </Button>
+          )}
           {isAdmin && !editing && (
             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={startEdit}>
               <Pencil className="w-3.5 h-3.5" />
