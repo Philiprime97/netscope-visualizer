@@ -21,7 +21,7 @@ interface DashboardBarProps {
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory }) => {
   const navigate = useNavigate();
-  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice } = useTopology();
+  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, exportTopology } = useTopology();
   const { user, logout, isAdmin } = useAuth();
 
   const totalDevices = devices.length;
