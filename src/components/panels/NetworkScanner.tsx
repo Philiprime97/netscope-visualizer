@@ -100,11 +100,20 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     };
   };
 
-  const handleScan = async () => {
+  // Persist cache whenever hosts/added/subnet change
+  useEffect(() => {
+    if (hosts.length > 0) {
+      saveCache({ hosts, subnet, added: Array.from(added) });
+    }
+  }, [hosts, added, subnet]);
+
+  const handleScan = async (rediscover = false) => {
     setScanning(true);
-    setHosts([]);
-    setAdded(new Set());
-    toast.info(`Scanning ${subnet}${community ? ' with SNMP' : ''}...`);
+    if (!rediscover) {
+      setHosts([]);
+      setAdded(new Set());
+    }
+    toast.info(`${rediscover ? 'Rediscovering' : 'Scanning'} ${subnet}${community ? ' with SNMP' : ''}...`);
     const result = await scanSubnet(subnet, community || undefined);
 
     if (result.alive.length === 0) {
@@ -121,7 +130,16 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       ports: [],
     }));
 
-    setHosts(discoveredHosts);
+    // Merge with existing hosts on rediscover
+    if (rediscover) {
+      const existingMap = new Map(hosts.map(h => [h.ip, h]));
+      for (const h of discoveredHosts) {
+        existingMap.set(h.ip, h); // update existing, add new
+      }
+      setHosts(Array.from(existingMap.values()));
+    } else {
+      setHosts(discoveredHosts);
+    }
 
     if (autoAdd) {
       const newHosts = discoveredHosts.filter(h => !existingIps.has(h.ip));
@@ -139,6 +157,13 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }
 
     setScanning(false);
+  };
+
+  const handleClearResults = () => {
+    setHosts([]);
+    setAdded(new Set());
+    sessionStorage.removeItem(SCANNER_CACHE_KEY);
+    toast.success('Scan results cleared');
   };
 
   const handleAdd = (host: DiscoveredHost) => {
