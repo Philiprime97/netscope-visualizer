@@ -30,6 +30,7 @@ const DevicePanel: React.FC = () => {
   const [editOs, setEditOs] = useState('');
   const [editingIfaceId, setEditingIfaceId] = useState<string | null>(null);
   const [editIfaceName, setEditIfaceName] = useState('');
+  const [showAppearance, setShowAppearance] = useState(false);
 
   if (!device) return null;
 
