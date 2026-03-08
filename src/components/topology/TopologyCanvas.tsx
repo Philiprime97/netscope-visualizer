@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useCallback, useMemo, useRef, useEffect, useState } from 'react';
 import {
   ReactFlow,
   Background,
@@ -15,8 +15,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import DeviceNode from './DeviceNode';
+import ConnectionDialog from './ConnectionDialog';
 import { useTopology } from '@/contexts/TopologyContext';
 import { NetworkLink } from '@/types/network';
+import { toast } from 'sonner';
 
 const nodeTypes = { device: DeviceNode };
 
@@ -24,8 +26,11 @@ const TopologyCanvas: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
     setSelectedDeviceId, setSelectedLinkId,
-    updatePosition, addLink, getConnectionCount,
+    updatePosition, addLink, removeLink, getConnectionCount,
   } = useTopology();
+
+  // Connection dialog state
+  const [pendingConnection, setPendingConnection] = useState<{ sourceId: string; targetId: string } | null>(null);
 
   const nodes: Node[] = useMemo(() =>
     devices.map(device => ({
@@ -81,38 +86,53 @@ const TopologyCanvas: React.FC = () => {
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     setLocalEdges(eds => applyEdgeChanges(changes, eds));
-  }, []);
+    // Handle edge removal via Delete key
+    changes.forEach(change => {
+      if (change.type === 'remove') {
+        removeLink(change.id);
+        toast.success('Connection removed');
+      }
+    });
+  }, [removeLink]);
 
   const onConnect = useCallback((connection: Connection) => {
     if (!connection.source || !connection.target) return;
 
-    const srcCount = getConnectionCount(connection.source);
-    const tgtCount = getConnectionCount(connection.target);
     const srcDevice = devices.find(d => d.id === connection.source);
     const tgtDevice = devices.find(d => d.id === connection.target);
-
     if (!srcDevice || !tgtDevice) return;
-    if (srcCount >= srcDevice.maxConnections || tgtCount >= tgtDevice.maxConnections) return;
 
-    const usedSrcIfs = links.filter(l => l.sourceDeviceId === connection.source).map(l => l.sourceInterfaceId);
-    const usedTgtIfs = links.filter(l => l.targetDeviceId === connection.target).map(l => l.targetInterfaceId);
-    const srcIf = srcDevice.interfaces.find(i => !usedSrcIfs.includes(i.id));
-    const tgtIf = tgtDevice.interfaces.find(i => !usedTgtIfs.includes(i.id));
+    const srcCount = getConnectionCount(connection.source);
+    const tgtCount = getConnectionCount(connection.target);
+    if (srcCount >= srcDevice.maxConnections) {
+      toast.error(`${srcDevice.hostname} has reached max connections (${srcDevice.maxConnections})`);
+      return;
+    }
+    if (tgtCount >= tgtDevice.maxConnections) {
+      toast.error(`${tgtDevice.hostname} has reached max connections (${tgtDevice.maxConnections})`);
+      return;
+    }
 
-    if (!srcIf || !tgtIf) return;
+    // Open interface picker dialog
+    setPendingConnection({ sourceId: connection.source, targetId: connection.target });
+  }, [devices, getConnectionCount]);
 
+  const handleConnectionConfirm = useCallback((srcIfaceId: string, tgtIfaceId: string) => {
+    if (!pendingConnection) return;
     const newLink: NetworkLink = {
       id: `link-${Date.now()}`,
-      sourceDeviceId: connection.source,
-      sourceInterfaceId: srcIf.id,
-      targetDeviceId: connection.target,
-      targetInterfaceId: tgtIf.id,
+      sourceDeviceId: pendingConnection.sourceId,
+      sourceInterfaceId: srcIfaceId,
+      targetDeviceId: pendingConnection.targetId,
+      targetInterfaceId: tgtIfaceId,
       speed: '1G',
       linkType: 'access',
       status: 'up',
     };
     addLink(newLink);
-  }, [devices, links, addLink, getConnectionCount]);
+    toast.success('Connection created');
+    setPendingConnection(null);
+  }, [pendingConnection, addLink]);
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedDeviceId(node.id);
@@ -128,6 +148,18 @@ const TopologyCanvas: React.FC = () => {
     setSelectedDeviceId(null);
     setSelectedLinkId(null);
   }, [setSelectedDeviceId, setSelectedLinkId]);
+
+  // Get used interface IDs for connection dialog
+  const pendingSrcDevice = pendingConnection ? devices.find(d => d.id === pendingConnection.sourceId) : null;
+  const pendingTgtDevice = pendingConnection ? devices.find(d => d.id === pendingConnection.targetId) : null;
+  const usedSrcIfaceIds = pendingConnection
+    ? links.filter(l => l.sourceDeviceId === pendingConnection.sourceId || l.targetDeviceId === pendingConnection.sourceId)
+        .flatMap(l => [l.sourceInterfaceId, l.targetInterfaceId])
+    : [];
+  const usedTgtIfaceIds = pendingConnection
+    ? links.filter(l => l.sourceDeviceId === pendingConnection.targetId || l.targetDeviceId === pendingConnection.targetId)
+        .flatMap(l => [l.sourceInterfaceId, l.targetInterfaceId])
+    : [];
 
   return (
     <div className="w-full h-full">
@@ -162,6 +194,19 @@ const TopologyCanvas: React.FC = () => {
           style={{ background: 'hsl(220, 18%, 10%)' }}
         />
       </ReactFlow>
+
+      {/* Connection interface picker dialog */}
+      {pendingSrcDevice && pendingTgtDevice && (
+        <ConnectionDialog
+          open={!!pendingConnection}
+          onClose={() => setPendingConnection(null)}
+          sourceDevice={pendingSrcDevice}
+          targetDevice={pendingTgtDevice}
+          usedSourceIfaceIds={usedSrcIfaceIds}
+          usedTargetIfaceIds={usedTgtIfaceIds}
+          onConfirm={handleConnectionConfirm}
+        />
+      )}
     </div>
   );
 };
