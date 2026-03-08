@@ -81,6 +81,22 @@ const TopologiesPage: React.FC = () => {
     toast.success(`Loading "${topo.name}"`);
   };
 
+  const handleNew = () => {
+    const name = prompt('New topology name:', `Topology ${new Date().toLocaleDateString()}`);
+    if (!name) return;
+    const empty: SavedTopology = {
+      id: `topo-${Date.now()}`,
+      name,
+      savedAt: new Date().toISOString(),
+      devices: [],
+      links: [],
+      positions: {},
+    };
+    sessionStorage.setItem('netscope-load-topology', JSON.stringify(empty));
+    navigate('/');
+    toast.success(`Created "${name}" — add devices to get started`);
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="h-14 border-b border-border flex items-center px-4 gap-3">
