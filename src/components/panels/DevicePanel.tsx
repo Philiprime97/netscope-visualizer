@@ -110,6 +110,19 @@ const DevicePanel: React.FC = () => {
         </div>
       </div>
 
+      {/* Appearance */}
+      {showAppearance && isAdmin && (
+        <div className="p-4 border-b border-border">
+          <DeviceAppearance
+            deviceType={device.type}
+            currentIcon={device.customIcon}
+            currentColor={device.customColor}
+            onIconChange={(name) => updateDevice(device.id, { customIcon: name })}
+            onColorChange={(color) => updateDevice(device.id, { customColor: color })}
+          />
+        </div>
+      )}
+
       {/* Info */}
       <div className="p-4 space-y-3">
         <div className="grid grid-cols-2 gap-2 text-xs">
