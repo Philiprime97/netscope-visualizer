@@ -97,6 +97,16 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         Topologies
       </Button>
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
+        const name = prompt('New topology name:', `Topology ${new Date().toLocaleDateString()}`);
+        if (!name) return;
+        const empty = { id: `topo-${Date.now()}`, name, savedAt: new Date().toISOString(), devices: [], links: [], positions: {} };
+        loadTopology(empty as any);
+        toast.success(`Created "${name}" — add devices to get started`);
+      }}>
+        <Plus className="w-3.5 h-3.5" />
+        New
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
         const name = prompt('Topology name:', `Topology ${new Date().toLocaleDateString()}`);
         if (!name) return;
         const topo = exportTopology();
