@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { TopologyProvider, useTopology } from '@/contexts/TopologyContext';
 import TopologyCanvas from '@/components/topology/TopologyCanvas';
@@ -8,9 +8,19 @@ import LinkPanel from '@/components/panels/LinkPanel';
 import Login from './Login';
 
 const TopologyView: React.FC = () => {
-  const { selectedDeviceId, selectedLinkId } = useTopology();
+  const { selectedDeviceId, selectedLinkId, loadTopology } = useTopology();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
+
+  useEffect(() => {
+    const stored = sessionStorage.getItem('netscope-load-topology');
+    if (stored) {
+      sessionStorage.removeItem('netscope-load-topology');
+      try {
+        loadTopology(JSON.parse(stored));
+      } catch {}
+    }
+  }, [loadTopology]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
