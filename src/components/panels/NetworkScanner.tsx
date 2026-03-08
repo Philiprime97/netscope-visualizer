@@ -113,7 +113,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setHosts([]);
       setAdded(new Set());
     }
-    toast.info(`${rediscover ? 'Rediscovering' : 'Pinging'} ${subnet}${community ? ' with SNMP' : ''}...`);
+    toast.info(`${rediscover ? 'Rediscovering' : 'Scanning'} ${subnet}${community ? ' with SNMP' : ''}...`);
     const result = await scanSubnet(subnet, community || undefined);
 
     if (result.alive.length === 0) {
