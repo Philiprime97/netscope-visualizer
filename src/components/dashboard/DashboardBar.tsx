@@ -144,7 +144,11 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
       </Button>
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={onToggleScanner}>
         <Radar className="w-3.5 h-3.5" />
-        Scan
+        Discover
+      </Button>
+      <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={handlePingAll} disabled={scanningAll}>
+        {scanningAll ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Radar className="w-3.5 h-3.5" />}
+        {scanningAll ? 'Scanning...' : 'Scan'}
       </Button>
 
       <Separator orientation="vertical" className="h-6" />
