@@ -9,6 +9,7 @@ export interface SavedTopology {
   devices: NetworkDevice[];
   links: NetworkLink[];
   positions: Record<string, { x: number; y: number }>;
+  notes?: string;
 }
 
 interface TopologyContextValue {
@@ -36,6 +37,8 @@ interface TopologyContextValue {
   getConnectionCount: (deviceId: string) => number;
   exportTopology: () => SavedTopology;
   loadTopology: (topology: SavedTopology) => void;
+  notes: string;
+  setNotes: (notes: string) => void;
 }
 
 const TopologyContext = createContext<TopologyContextValue | null>(null);
@@ -54,6 +57,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
   const [showLabels, setShowLabels] = useState(true);
   const [showAnimations, setShowAnimations] = useState(true);
+  const [notes, setNotes] = useState('');
 
   const updatePosition = useCallback((id: string, x: number, y: number) => {
     setPositions(p => ({ ...p, [id]: { x, y } }));
@@ -123,13 +127,15 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       devices,
       links,
       positions,
+      notes,
     };
-  }, [devices, links, positions]);
+  }, [devices, links, positions, notes]);
 
   const loadTopology = useCallback((topology: SavedTopology) => {
     setDevices(topology.devices);
     setLinks(topology.links);
     setPositions(topology.positions);
+    setNotes(topology.notes || '');
     setSelectedDeviceId(null);
     setSelectedLinkId(null);
   }, []);
@@ -143,6 +149,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       updateInterface, addInterface, removeInterface,
       addLink, removeLink, updateLink, getConnectionCount,
       exportTopology, loadTopology,
+      notes, setNotes,
     }}>
       {children}
     </TopologyContext.Provider>

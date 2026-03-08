@@ -7,6 +7,7 @@ import DevicePanel from '@/components/panels/DevicePanel';
 import LinkPanel from '@/components/panels/LinkPanel';
 import NetworkScanner from '@/components/panels/NetworkScanner';
 import SnmpDiscoveryPanel from '@/components/panels/SnmpDiscoveryPanel';
+import TopologyNotes from '@/components/panels/TopologyNotes';
 import Login from './Login';
 
 const TopologyView: React.FC = () => {
@@ -15,6 +16,7 @@ const TopologyView: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [showScanner, setShowScanner] = useState(false);
   const [showSnmp, setShowSnmp] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('netscope-load-topology');
@@ -35,8 +37,9 @@ const TopologyView: React.FC = () => {
         setFilterCategory={setFilterCategory}
         onToggleScanner={() => { setShowScanner(s => !s); setShowSnmp(false); }}
         onToggleSnmp={() => { setShowSnmp(s => !s); setShowScanner(false); }}
+        onToggleNotes={() => setShowNotes(s => !s)}
       />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         <div className="flex-1">
           <TopologyCanvas />
         </div>
@@ -44,6 +47,7 @@ const TopologyView: React.FC = () => {
         {selectedLinkId && !selectedDeviceId && <LinkPanel />}
         {showScanner && !selectedDeviceId && !selectedLinkId && <NetworkScanner onClose={() => setShowScanner(false)} />}
         {showSnmp && !selectedDeviceId && !selectedLinkId && !showScanner && <SnmpDiscoveryPanel onClose={() => setShowSnmp(false)} />}
+        {showNotes && <TopologyNotes onClose={() => setShowNotes(false)} />}
       </div>
     </div>
   );
