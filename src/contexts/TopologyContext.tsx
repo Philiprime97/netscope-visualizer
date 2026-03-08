@@ -57,6 +57,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
   const [showLabels, setShowLabels] = useState(true);
   const [showAnimations, setShowAnimations] = useState(true);
+  const [notes, setNotes] = useState('');
 
   const updatePosition = useCallback((id: string, x: number, y: number) => {
     setPositions(p => ({ ...p, [id]: { x, y } }));
