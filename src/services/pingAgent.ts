@@ -99,6 +99,53 @@ export const snmpQuery = async (ip: string, community: string): Promise<SnmpQuer
   }
 };
 
+export interface LocalMetrics {
+  cpu: number;
+  memory: number;
+  memoryTotal: number;
+  memoryUsed: number;
+  netBytesSent: number;
+  netBytesRecv: number;
+  trafficHistory: {
+    timestamp: number;
+    rxBytesPerSec: number;
+    txBytesPerSec: number;
+    rxMbps: number;
+    txMbps: number;
+  }[];
+}
+
+export const getLocalMetrics = async (): Promise<LocalMetrics | null> => {
+  try {
+    const res = await fetch(`${AGENT_URL}/metrics/local`, { signal: AbortSignal.timeout(3000) });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+};
+
+export interface SnmpMetrics {
+  ip: string;
+  cpu: number | null;
+  memory: number | null;
+}
+
+export const getSnmpMetrics = async (ip: string, community: string): Promise<SnmpMetrics | null> => {
+  try {
+    const res = await fetch(`${AGENT_URL}/metrics/snmp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ip, community }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+};
+
 export const checkAgentHealth = async (): Promise<{ ok: boolean; snmp?: boolean }> => {
   try {
     const res = await fetch(`${AGENT_URL}/health`, { signal: AbortSignal.timeout(2000) });
