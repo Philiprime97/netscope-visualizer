@@ -135,6 +135,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setDevices(topology.devices);
     setLinks(topology.links);
     setPositions(topology.positions);
+    setNotes(topology.notes || '');
     setSelectedDeviceId(null);
     setSelectedLinkId(null);
   }, []);
