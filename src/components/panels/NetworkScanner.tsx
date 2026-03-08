@@ -113,7 +113,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       setHosts([]);
       setAdded(new Set());
     }
-    toast.info(`${rediscover ? 'Rediscovering' : 'Pinging'} ${subnet}${community ? ' with SNMP' : ''}...`);
+    toast.info(`${rediscover ? 'Rediscovering' : 'Scanning'} ${subnet}${community ? ' with SNMP' : ''}...`);
     const result = await scanSubnet(subnet, community || undefined);
 
     if (result.alive.length === 0) {
@@ -163,7 +163,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     setHosts([]);
     setAdded(new Set());
     sessionStorage.removeItem(SCANNER_CACHE_KEY);
-    toast.success('Ping results cleared');
+    toast.success('Scan results cleared');
   };
 
   const handleAdd = (host: DiscoveredHost) => {
@@ -195,7 +195,7 @@ const NetworkScanner: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       <div className="p-4 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-2">
           <Radar className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-semibold">Network Ping</h2>
+          <h2 className="text-sm font-semibold">Network Scanner</h2>
         </div>
         <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onClose}>Close</Button>
       </div>
