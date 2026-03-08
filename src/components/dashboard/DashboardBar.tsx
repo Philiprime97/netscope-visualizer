@@ -23,9 +23,31 @@ interface DashboardBarProps {
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner }) => {
   const navigate = useNavigate();
-  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, exportTopology, loadTopology } = useTopology();
+  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
   const { user, logout, isAdmin } = useAuth();
+  const [scanningAll, setScanningAll] = useState(false);
+
+  const handlePingAll = async () => {
+    setScanningAll(true);
+    toast.info(`Pinging ${devices.length} devices...`);
+    let upCount = 0;
+    let downCount = 0;
+    const results = await Promise.all(
+      devices.map(d => pingDevice(d.ipAddress).then(r => ({ id: d.id, ...r })))
+    );
+    for (const r of results) {
+      if (r.error) {
+        toast.error(r.error);
+        setScanningAll(false);
+        return;
+      }
+      updateDevice(r.id, { status: r.reachable ? 'up' : 'down' });
+      if (r.reachable) upCount++; else downCount++;
+    }
+    toast.success(`Scan complete: ${upCount} up, ${downCount} down`);
+    setScanningAll(false);
+  };
 
   const totalDevices = devices.length;
   const upDevices = devices.filter(d => d.status === 'up').length;
