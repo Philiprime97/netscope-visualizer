@@ -52,7 +52,7 @@ const TopologyCanvasInner: React.FC = () => {
   const clipboardRef = useRef<ClipboardData | null>(null);
   const selectedNodesRef = useRef<Set<string>>(new Set());
 
-  const nodes: Node[] = useMemo(() =>
+  const deviceNodes: Node[] = useMemo(() =>
     devices.map(device => ({
       id: device.id,
       type: 'device',
@@ -61,6 +61,22 @@ const TopologyCanvasInner: React.FC = () => {
     })),
     [devices, positions]
   );
+
+  const textBoxNodes: Node[] = useMemo(() =>
+    annotations.map(ann => ({
+      id: ann.id,
+      type: 'textBox',
+      position: positions[ann.id] || { x: 200, y: 200 },
+      data: {
+        text: ann.text,
+        onTextChange: updateAnnotation,
+        onRemove: removeAnnotation,
+      },
+    })),
+    [annotations, positions, updateAnnotation, removeAnnotation]
+  );
+
+  const nodes: Node[] = useMemo(() => [...deviceNodes, ...textBoxNodes], [deviceNodes, textBoxNodes]);
 
   const edges: Edge[] = useMemo(() =>
     links.map(link => {
