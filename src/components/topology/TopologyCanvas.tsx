@@ -18,12 +18,13 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import DeviceNode from './DeviceNode';
+import TextBoxNode from './TextBoxNode';
 import ConnectionDialog from './ConnectionDialog';
 import { useTopology } from '@/contexts/TopologyContext';
 import { NetworkLink, NetworkDevice } from '@/types/network';
 import { toast } from 'sonner';
 
-const nodeTypes = { device: DeviceNode };
+const nodeTypes = { device: DeviceNode, textBox: TextBoxNode };
 
 type PendingConnection = {
   sourceId: string;
@@ -41,6 +42,7 @@ interface ClipboardData {
 const TopologyCanvasInner: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
+    annotations, updateAnnotation, removeAnnotation,
     setSelectedDeviceId, setSelectedLinkId,
     updatePosition, addLink, removeLink, removeDevice, addDevice,
   } = useTopology();
@@ -50,7 +52,7 @@ const TopologyCanvasInner: React.FC = () => {
   const clipboardRef = useRef<ClipboardData | null>(null);
   const selectedNodesRef = useRef<Set<string>>(new Set());
 
-  const nodes: Node[] = useMemo(() =>
+  const deviceNodes: Node[] = useMemo(() =>
     devices.map(device => ({
       id: device.id,
       type: 'device',
@@ -59,6 +61,22 @@ const TopologyCanvasInner: React.FC = () => {
     })),
     [devices, positions]
   );
+
+  const textBoxNodes: Node[] = useMemo(() =>
+    annotations.map(ann => ({
+      id: ann.id,
+      type: 'textBox',
+      position: positions[ann.id] || { x: 200, y: 200 },
+      data: {
+        text: ann.text,
+        onTextChange: updateAnnotation,
+        onRemove: removeAnnotation,
+      },
+    })),
+    [annotations, positions, updateAnnotation, removeAnnotation]
+  );
+
+  const nodes: Node[] = useMemo(() => [...deviceNodes, ...textBoxNodes], [deviceNodes, textBoxNodes]);
 
   const edges: Edge[] = useMemo(() =>
     links.map(link => {
@@ -97,6 +115,8 @@ const TopologyCanvasInner: React.FC = () => {
   useEffect(() => { setLocalNodes(nodes); }, [nodes]);
   useEffect(() => { setLocalEdges(edges); }, [edges]);
 
+  const annotationIds = useMemo(() => new Set(annotations.map(a => a.id)), [annotations]);
+
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     setLocalNodes(nds => applyNodeChanges(changes, nds));
     changes.forEach(change => {
@@ -104,11 +124,15 @@ const TopologyCanvasInner: React.FC = () => {
         updatePosition(change.id, change.position.x, change.position.y);
       }
       if (change.type === 'remove') {
-        removeDevice(change.id);
-        toast.success('Device removed');
+        if (annotationIds.has(change.id)) {
+          removeAnnotation(change.id);
+        } else {
+          removeDevice(change.id);
+          toast.success('Device removed');
+        }
       }
     });
-  }, [updatePosition, removeDevice]);
+  }, [updatePosition, removeDevice, removeAnnotation, annotationIds]);
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     setLocalEdges(eds => applyEdgeChanges(changes, eds));
