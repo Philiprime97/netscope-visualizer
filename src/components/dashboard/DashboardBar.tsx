@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2, StickyNote, Type, Image, GitBranch } from 'lucide-react';
+import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2, StickyNote, Type, Image, GitBranch, Shapes } from 'lucide-react';
+import { type ShapeType } from '@/contexts/TopologyContext';
 import { pingDevice } from '@/services/pingAgent';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ interface DashboardBarProps {
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner, onToggleSnmp, onToggleNotes }) => {
   const navigate = useNavigate();
-  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology, addAnnotation, updatePosition } = useTopology();
+  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology, addAnnotation, addShape, updatePosition } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
   const { user, logout, isAdmin } = useAuth();
   const [scanningAll, setScanningAll] = useState(false);
@@ -182,6 +183,37 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         <Type className="w-3.5 h-3.5" />
         Text Box
       </Button>
+
+      {/* Shapes */}
+      <Select onValueChange={(v) => {
+        const shapeType = v as ShapeType;
+        const id = `shape-${Date.now()}`;
+        addShape({
+          id,
+          shapeType,
+          width: shapeType === 'circle' ? 120 : 160,
+          height: shapeType === 'circle' ? 120 : 100,
+          color: 'hsl(200, 80%, 55%)',
+          opacity: 0.25,
+          zIndex: -1,
+          label: '',
+          borderColor: 'hsl(200, 80%, 55%)',
+          borderWidth: 2,
+        }, { x: 250 + Math.random() * 200, y: 250 + Math.random() * 200 });
+        toast.success(`Added ${shapeType} shape`);
+      }}>
+        <SelectTrigger className="h-8 w-[100px] text-xs gap-1">
+          <Shapes className="w-3 h-3" />
+          <SelectValue placeholder="Shapes" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="rectangle">Rectangle</SelectItem>
+          <SelectItem value="circle">Circle</SelectItem>
+          <SelectItem value="ellipse">Ellipse</SelectItem>
+          <SelectItem value="diamond">Diamond</SelectItem>
+          <SelectItem value="triangle">Triangle</SelectItem>
+        </SelectContent>
+      </Select>
 
       {/* Export */}
 

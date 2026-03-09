@@ -7,6 +7,21 @@ export interface TextAnnotation {
   text: string;
 }
 
+export type ShapeType = 'rectangle' | 'circle' | 'diamond' | 'ellipse' | 'triangle';
+
+export interface CanvasShape {
+  id: string;
+  shapeType: ShapeType;
+  width: number;
+  height: number;
+  color: string;
+  opacity: number;
+  zIndex: number;
+  label?: string;
+  borderColor?: string;
+  borderWidth?: number;
+}
+
 export interface SavedTopology {
   id: string;
   name: string;
@@ -16,6 +31,7 @@ export interface SavedTopology {
   positions: Record<string, { x: number; y: number }>;
   notes?: string;
   annotations?: TextAnnotation[];
+  shapes?: CanvasShape[];
 }
 
 interface TopologyContextValue {
@@ -27,6 +43,7 @@ interface TopologyContextValue {
   showLabels: boolean;
   showAnimations: boolean;
   annotations: TextAnnotation[];
+  shapes: CanvasShape[];
   setSelectedDeviceId: (id: string | null) => void;
   setSelectedLinkId: (id: string | null) => void;
   setShowLabels: (v: boolean) => void;
@@ -49,6 +66,9 @@ interface TopologyContextValue {
   addAnnotation: (annotation: TextAnnotation, pos: { x: number; y: number }) => void;
   updateAnnotation: (id: string, text: string) => void;
   removeAnnotation: (id: string) => void;
+  addShape: (shape: CanvasShape, pos: { x: number; y: number }) => void;
+  updateShape: (id: string, updates: Partial<CanvasShape>) => void;
+  removeShape: (id: string) => void;
 }
 
 const TopologyContext = createContext<TopologyContextValue | null>(null);
@@ -69,6 +89,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [showAnimations, setShowAnimations] = useState(true);
   const [notes, setNotes] = useState('');
   const [annotations, setAnnotations] = useState<TextAnnotation[]>([]);
+  const [shapes, setShapes] = useState<CanvasShape[]>([]);
 
   const updatePosition = useCallback((id: string, x: number, y: number) => {
     setPositions(p => ({ ...p, [id]: { x, y } }));
@@ -144,6 +165,20 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setPositions(p => { const next = { ...p }; delete next[id]; return next; });
   }, []);
 
+  const addShape = useCallback((shape: CanvasShape, pos: { x: number; y: number }) => {
+    setShapes(s => [...s, shape]);
+    setPositions(p => ({ ...p, [shape.id]: pos }));
+  }, []);
+
+  const updateShape = useCallback((id: string, updates: Partial<CanvasShape>) => {
+    setShapes(s => s.map(sh => sh.id === id ? { ...sh, ...updates } : sh));
+  }, []);
+
+  const removeShape = useCallback((id: string) => {
+    setShapes(s => s.filter(sh => sh.id !== id));
+    setPositions(p => { const next = { ...p }; delete next[id]; return next; });
+  }, []);
+
   const exportTopology = useCallback((): SavedTopology => {
     return {
       id: `topo-${Date.now()}`,
@@ -154,8 +189,9 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       positions,
       notes,
       annotations,
+      shapes,
     };
-  }, [devices, links, positions, notes, annotations]);
+  }, [devices, links, positions, notes, annotations, shapes]);
 
   const loadTopology = useCallback((topology: SavedTopology) => {
     setDevices(topology.devices);
@@ -163,6 +199,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setPositions(topology.positions);
     setNotes(topology.notes || '');
     setAnnotations(topology.annotations || []);
+    setShapes(topology.shapes || []);
     setSelectedDeviceId(null);
     setSelectedLinkId(null);
   }, []);
@@ -170,7 +207,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   return (
     <TopologyContext.Provider value={{
       devices, links, positions, selectedDeviceId, selectedLinkId,
-      showLabels, showAnimations, annotations,
+      showLabels, showAnimations, annotations, shapes,
       setSelectedDeviceId, setSelectedLinkId, setShowLabels, setShowAnimations,
       updatePosition, addDevice, removeDevice, updateDevice,
       updateInterface, addInterface, removeInterface,
@@ -178,6 +215,7 @@ export const TopologyProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       exportTopology, loadTopology,
       notes, setNotes,
       addAnnotation, updateAnnotation, removeAnnotation,
+      addShape, updateShape, removeShape,
     }}>
       {children}
     </TopologyContext.Provider>

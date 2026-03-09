@@ -19,12 +19,13 @@ import {
 import '@xyflow/react/dist/style.css';
 import DeviceNode from './DeviceNode';
 import TextBoxNode from './TextBoxNode';
+import ShapeNode from './ShapeNode';
 import ConnectionDialog from './ConnectionDialog';
 import { useTopology } from '@/contexts/TopologyContext';
 import { NetworkLink, NetworkDevice } from '@/types/network';
 import { toast } from 'sonner';
 
-const nodeTypes = { device: DeviceNode, textBox: TextBoxNode };
+const nodeTypes = { device: DeviceNode, textBox: TextBoxNode, shape: ShapeNode };
 
 type PendingConnection = {
   sourceId: string;
@@ -43,6 +44,7 @@ const TopologyCanvasInner: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
     annotations, updateAnnotation, removeAnnotation,
+    shapes, updateShape, removeShape,
     setSelectedDeviceId, setSelectedLinkId,
     updatePosition, addLink, removeLink, removeDevice, addDevice,
   } = useTopology();
@@ -76,7 +78,22 @@ const TopologyCanvasInner: React.FC = () => {
     [annotations, positions, updateAnnotation, removeAnnotation]
   );
 
-  const nodes: Node[] = useMemo(() => [...deviceNodes, ...textBoxNodes], [deviceNodes, textBoxNodes]);
+  const shapeNodes: Node[] = useMemo(() =>
+    shapes.map(shape => ({
+      id: shape.id,
+      type: 'shape',
+      position: positions[shape.id] || { x: 200, y: 200 },
+      zIndex: shape.zIndex,
+      data: {
+        shape,
+        onUpdate: updateShape,
+        onRemove: removeShape,
+      },
+    })),
+    [shapes, positions, updateShape, removeShape]
+  );
+
+  const nodes: Node[] = useMemo(() => [...shapeNodes, ...deviceNodes, ...textBoxNodes], [shapeNodes, deviceNodes, textBoxNodes]);
 
   const edges: Edge[] = useMemo(() =>
     links.map(link => {
@@ -116,6 +133,7 @@ const TopologyCanvasInner: React.FC = () => {
   useEffect(() => { setLocalEdges(edges); }, [edges]);
 
   const annotationIds = useMemo(() => new Set(annotations.map(a => a.id)), [annotations]);
+  const shapeIds = useMemo(() => new Set(shapes.map(s => s.id)), [shapes]);
 
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     setLocalNodes(nds => applyNodeChanges(changes, nds));
@@ -126,13 +144,15 @@ const TopologyCanvasInner: React.FC = () => {
       if (change.type === 'remove') {
         if (annotationIds.has(change.id)) {
           removeAnnotation(change.id);
+        } else if (shapeIds.has(change.id)) {
+          removeShape(change.id);
         } else {
           removeDevice(change.id);
           toast.success('Device removed');
         }
       }
     });
-  }, [updatePosition, removeDevice, removeAnnotation, annotationIds]);
+  }, [updatePosition, removeDevice, removeAnnotation, removeShape, annotationIds, shapeIds]);
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     setLocalEdges(eds => applyEdgeChanges(changes, eds));
