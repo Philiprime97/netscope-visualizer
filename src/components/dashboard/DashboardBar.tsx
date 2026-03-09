@@ -183,47 +183,7 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         Text Box
       </Button>
 
-      {/* Layout & Export */}
-      <Select onValueChange={(v) => {
-        const devs = devices;
-        if (devs.length === 0) return;
-        const sorted = [...devs];
-        const spacing = { x: 180, y: 140 };
-        if (v === 'grid') {
-          const cols = Math.ceil(Math.sqrt(sorted.length));
-          sorted.forEach((d, i) => {
-            updatePosition(d.id, 100 + (i % cols) * spacing.x, 100 + Math.floor(i / cols) * spacing.y);
-          });
-        } else if (v === 'tree') {
-          // Network devices on top, endpoints middle, containers bottom
-          const groups = { network: [] as typeof devs, endpoint: [] as typeof devs, container: [] as typeof devs };
-          sorted.forEach(d => (groups[d.category] || groups.endpoint).push(d));
-          let y = 80;
-          Object.values(groups).forEach(group => {
-            group.forEach((d, i) => {
-              updatePosition(d.id, 100 + i * spacing.x, y);
-            });
-            if (group.length > 0) y += spacing.y;
-          });
-        } else if (v === 'circular') {
-          const cx = 400, cy = 350, r = Math.max(150, sorted.length * 30);
-          sorted.forEach((d, i) => {
-            const angle = (2 * Math.PI * i) / sorted.length - Math.PI / 2;
-            updatePosition(d.id, cx + r * Math.cos(angle), cy + r * Math.sin(angle));
-          });
-        }
-        toast.success(`Applied ${v} layout`);
-      }}>
-        <SelectTrigger className="h-8 w-[90px] text-xs gap-1">
-          <LayoutGrid className="w-3 h-3" />
-          <SelectValue placeholder="Layout" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="grid">Grid</SelectItem>
-          <SelectItem value="tree">Tree</SelectItem>
-          <SelectItem value="circular">Circular</SelectItem>
-        </SelectContent>
-      </Select>
+      {/* Export */}
 
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
         const el = document.querySelector('.react-flow') as HTMLElement;
