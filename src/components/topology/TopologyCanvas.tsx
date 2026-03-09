@@ -133,6 +133,7 @@ const TopologyCanvasInner: React.FC = () => {
   useEffect(() => { setLocalEdges(edges); }, [edges]);
 
   const annotationIds = useMemo(() => new Set(annotations.map(a => a.id)), [annotations]);
+  const shapeIds = useMemo(() => new Set(shapes.map(s => s.id)), [shapes]);
 
   const handleNodesChange = useCallback((changes: NodeChange[]) => {
     setLocalNodes(nds => applyNodeChanges(changes, nds));
@@ -143,13 +144,15 @@ const TopologyCanvasInner: React.FC = () => {
       if (change.type === 'remove') {
         if (annotationIds.has(change.id)) {
           removeAnnotation(change.id);
+        } else if (shapeIds.has(change.id)) {
+          removeShape(change.id);
         } else {
           removeDevice(change.id);
           toast.success('Device removed');
         }
       }
     });
-  }, [updatePosition, removeDevice, removeAnnotation, annotationIds]);
+  }, [updatePosition, removeDevice, removeAnnotation, removeShape, annotationIds, shapeIds]);
 
   const handleEdgesChange = useCallback((changes: EdgeChange[]) => {
     setLocalEdges(eds => applyEdgeChanges(changes, eds));
