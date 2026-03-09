@@ -44,6 +44,7 @@ const TopologyCanvasInner: React.FC = () => {
   const {
     devices, links, positions, showAnimations, showLabels,
     annotations, updateAnnotation, removeAnnotation,
+    shapes, updateShape, removeShape,
     setSelectedDeviceId, setSelectedLinkId,
     updatePosition, addLink, removeLink, removeDevice, addDevice,
   } = useTopology();
