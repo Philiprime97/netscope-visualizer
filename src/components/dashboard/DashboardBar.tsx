@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2, StickyNote, Type, Image, GitBranch } from 'lucide-react';
+import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2, StickyNote, Type, Image, GitBranch, Shapes } from 'lucide-react';
+import { type ShapeType } from '@/contexts/TopologyContext';
 import { pingDevice } from '@/services/pingAgent';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
