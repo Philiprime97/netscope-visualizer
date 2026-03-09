@@ -78,7 +78,22 @@ const TopologyCanvasInner: React.FC = () => {
     [annotations, positions, updateAnnotation, removeAnnotation]
   );
 
-  const nodes: Node[] = useMemo(() => [...deviceNodes, ...textBoxNodes], [deviceNodes, textBoxNodes]);
+  const shapeNodes: Node[] = useMemo(() =>
+    shapes.map(shape => ({
+      id: shape.id,
+      type: 'shape',
+      position: positions[shape.id] || { x: 200, y: 200 },
+      zIndex: shape.zIndex,
+      data: {
+        shape,
+        onUpdate: updateShape,
+        onRemove: removeShape,
+      },
+    })),
+    [shapes, positions, updateShape, removeShape]
+  );
+
+  const nodes: Node[] = useMemo(() => [...shapeNodes, ...deviceNodes, ...textBoxNodes], [shapeNodes, deviceNodes, textBoxNodes]);
 
   const edges: Edge[] = useMemo(() =>
     links.map(link => {
