@@ -190,7 +190,7 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         if (!el) return;
         import('html-to-image').then(({ toPng }) => {
           toPng(el, {
-            backgroundColor: '#0a0c10',
+            backgroundColor: 'transparent',
             filter: (node) => {
               // Exclude panels, controls, and non-canvas UI
               const cls = (node as HTMLElement)?.className || '';
