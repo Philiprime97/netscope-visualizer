@@ -19,12 +19,13 @@ import {
 import '@xyflow/react/dist/style.css';
 import DeviceNode from './DeviceNode';
 import TextBoxNode from './TextBoxNode';
+import ShapeNode from './ShapeNode';
 import ConnectionDialog from './ConnectionDialog';
 import { useTopology } from '@/contexts/TopologyContext';
 import { NetworkLink, NetworkDevice } from '@/types/network';
 import { toast } from 'sonner';
 
-const nodeTypes = { device: DeviceNode, textBox: TextBoxNode };
+const nodeTypes = { device: DeviceNode, textBox: TextBoxNode, shape: ShapeNode };
 
 type PendingConnection = {
   sourceId: string;
