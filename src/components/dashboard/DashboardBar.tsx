@@ -186,10 +186,18 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
       {/* Export */}
 
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
-        const el = document.querySelector('.react-flow') as HTMLElement;
+        const el = document.querySelector('.react-flow__viewport')?.parentElement as HTMLElement;
         if (!el) return;
         import('html-to-image').then(({ toPng }) => {
-          toPng(el, { backgroundColor: '#0a0c10' }).then((dataUrl) => {
+          toPng(el, {
+            backgroundColor: '#0a0c10',
+            filter: (node) => {
+              // Exclude panels, controls, and non-canvas UI
+              const cls = (node as HTMLElement)?.className || '';
+              if (typeof cls === 'string' && (cls.includes('react-flow__panel') || cls.includes('react-flow__controls') || cls.includes('react-flow__minimap') || cls.includes('react-flow__attribution'))) return false;
+              return true;
+            },
+          }).then((dataUrl) => {
             const a = document.createElement('a');
             a.href = dataUrl;
             a.download = `topology-${Date.now()}.png`;
