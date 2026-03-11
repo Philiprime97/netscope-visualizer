@@ -1,13 +1,4 @@
-from pysnmp.hlapi import (
-    SnmpEngine,
-    CommunityData,
-    UdpTransportTarget,
-    ContextData,
-    ObjectType,
-    ObjectIdentity,
-    getCmd,
-)
-
+from pysnmp.hlapi import *
 from config import Config
 
 engine = SnmpEngine()
@@ -18,11 +9,9 @@ def snmp_get(ip, community, oid):
     iterator = getCmd(
         engine,
         CommunityData(community),
-        UdpTransportTarget(
-            (ip, 161),
-            timeout=Config.SNMP_TIMEOUT,
-            retries=Config.SNMP_RETRIES
-        ),
+        UdpTransportTarget((ip, 161),
+        timeout=Config.SNMP_TIMEOUT,
+        retries=Config.SNMP_RETRIES),
         ContextData(),
         ObjectType(ObjectIdentity(oid))
     )
