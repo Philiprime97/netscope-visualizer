@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2, StickyNote, Type, LayoutGrid, Image, GitBranch } from 'lucide-react';
+import { Network, Server, Box, Hexagon, AlertTriangle, Eye, EyeOff, Sparkles, LogOut, Search, Plus, BarChart3, Save, FolderOpen, Upload, Radar, Loader2, StickyNote, Type, Image, GitBranch, Shapes } from 'lucide-react';
+import { type ShapeType } from '@/contexts/TopologyContext';
 import { pingDevice } from '@/services/pingAgent';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,7 @@ interface DashboardBarProps {
 
 const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery, filterCategory, setFilterCategory, onToggleScanner, onToggleSnmp, onToggleNotes }) => {
   const navigate = useNavigate();
-  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology, addAnnotation, updatePosition } = useTopology();
+  const { devices, links, showLabels, showAnimations, setShowLabels, setShowAnimations, addDevice, updateDevice, exportTopology, loadTopology, addAnnotation, addShape, updatePosition } = useTopology();
   const importRef = useRef<HTMLInputElement>(null);
   const { user, logout, isAdmin } = useAuth();
   const [scanningAll, setScanningAll] = useState(false);
@@ -183,53 +184,52 @@ const DashboardBar: React.FC<DashboardBarProps> = ({ searchQuery, setSearchQuery
         Text Box
       </Button>
 
-      {/* Layout & Export */}
+      {/* Shapes */}
       <Select onValueChange={(v) => {
-        const devs = devices;
-        if (devs.length === 0) return;
-        const sorted = [...devs];
-        const spacing = { x: 180, y: 140 };
-        if (v === 'grid') {
-          const cols = Math.ceil(Math.sqrt(sorted.length));
-          sorted.forEach((d, i) => {
-            updatePosition(d.id, 100 + (i % cols) * spacing.x, 100 + Math.floor(i / cols) * spacing.y);
-          });
-        } else if (v === 'tree') {
-          // Network devices on top, endpoints middle, containers bottom
-          const groups = { network: [] as typeof devs, endpoint: [] as typeof devs, container: [] as typeof devs };
-          sorted.forEach(d => (groups[d.category] || groups.endpoint).push(d));
-          let y = 80;
-          Object.values(groups).forEach(group => {
-            group.forEach((d, i) => {
-              updatePosition(d.id, 100 + i * spacing.x, y);
-            });
-            if (group.length > 0) y += spacing.y;
-          });
-        } else if (v === 'circular') {
-          const cx = 400, cy = 350, r = Math.max(150, sorted.length * 30);
-          sorted.forEach((d, i) => {
-            const angle = (2 * Math.PI * i) / sorted.length - Math.PI / 2;
-            updatePosition(d.id, cx + r * Math.cos(angle), cy + r * Math.sin(angle));
-          });
-        }
-        toast.success(`Applied ${v} layout`);
+        const shapeType = v as ShapeType;
+        const id = `shape-${Date.now()}`;
+        addShape({
+          id,
+          shapeType,
+          width: shapeType === 'circle' ? 120 : 160,
+          height: shapeType === 'circle' ? 120 : 100,
+          color: 'hsl(200, 80%, 55%)',
+          opacity: 0.25,
+          zIndex: -1,
+          label: '',
+          borderColor: 'hsl(200, 80%, 55%)',
+          borderWidth: 2,
+        }, { x: 250 + Math.random() * 200, y: 250 + Math.random() * 200 });
+        toast.success(`Added ${shapeType} shape`);
       }}>
-        <SelectTrigger className="h-8 w-[90px] text-xs gap-1">
-          <LayoutGrid className="w-3 h-3" />
-          <SelectValue placeholder="Layout" />
+        <SelectTrigger className="h-8 w-[100px] text-xs gap-1">
+          <Shapes className="w-3 h-3" />
+          <SelectValue placeholder="Shapes" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="grid">Grid</SelectItem>
-          <SelectItem value="tree">Tree</SelectItem>
-          <SelectItem value="circular">Circular</SelectItem>
+          <SelectItem value="rectangle">Rectangle</SelectItem>
+          <SelectItem value="circle">Circle</SelectItem>
+          <SelectItem value="ellipse">Ellipse</SelectItem>
+          <SelectItem value="diamond">Diamond</SelectItem>
+          <SelectItem value="triangle">Triangle</SelectItem>
         </SelectContent>
       </Select>
 
+      {/* Export */}
+
       <Button variant="ghost" size="sm" className="h-8 text-xs gap-1.5" onClick={() => {
-        const el = document.querySelector('.react-flow') as HTMLElement;
+        const el = document.querySelector('.react-flow__viewport')?.parentElement as HTMLElement;
         if (!el) return;
         import('html-to-image').then(({ toPng }) => {
-          toPng(el, { backgroundColor: '#0a0c10' }).then((dataUrl) => {
+          toPng(el, {
+            backgroundColor: 'transparent',
+            filter: (node) => {
+              // Exclude panels, controls, and non-canvas UI
+              const cls = (node as HTMLElement)?.className || '';
+              if (typeof cls === 'string' && (cls.includes('react-flow__panel') || cls.includes('react-flow__controls') || cls.includes('react-flow__minimap') || cls.includes('react-flow__attribution'))) return false;
+              return true;
+            },
+          }).then((dataUrl) => {
             const a = document.createElement('a');
             a.href = dataUrl;
             a.download = `topology-${Date.now()}.png`;
