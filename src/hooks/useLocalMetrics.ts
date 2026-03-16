@@ -38,6 +38,14 @@ export const useLocalMetrics = (intervalMs = 5000) => {
         });
         setTrafficHistory(points);
       }
+
+      // Accumulate CPU/RAM history
+      const now = new Date();
+      const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+      setResourceHistory(prev => {
+        const next = [...prev, { time: timeStr, cpu: data.cpu, memory: data.memory }];
+        return next.length > MAX_RESOURCE_POINTS ? next.slice(-MAX_RESOURCE_POINTS) : next;
+      });
     } else {
       setConnected(false);
     }
