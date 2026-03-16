@@ -7,6 +7,12 @@ export interface TrafficPoint {
   txMbps: number;
 }
 
+export interface ResourcePoint {
+  time: string;
+  cpu: number;
+  memory: number;
+}
+
 export const useLocalMetrics = (intervalMs = 5000) => {
   const [metrics, setMetrics] = useState<LocalMetrics | null>(null);
   const [trafficHistory, setTrafficHistory] = useState<TrafficPoint[]>([]);
