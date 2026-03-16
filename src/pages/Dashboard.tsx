@@ -26,6 +26,8 @@ const Responsive = ReactGridLayout.Responsive;
 // @ts-ignore
 const WidthProvider = ReactGridLayout.WidthProvider;
 const ResponsiveGridLayout = WidthProvider(Responsive);
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 
 const CHART_COLORS = {
   primary: 'hsl(185, 80%, 50%)',
