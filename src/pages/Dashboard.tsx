@@ -20,6 +20,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useLocalMetrics } from '@/hooks/useLocalMetrics';
 import { Responsive, WidthProvider } from 'react-grid-layout';
+// @ts-ignore - WidthProvider type export issue
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
