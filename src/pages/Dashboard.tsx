@@ -44,7 +44,7 @@ const Dashboard: React.FC = () => {
   const { devices, links } = useTopology();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { metrics: localMetrics, trafficHistory, connected: agentConnected } = useLocalMetrics(5000);
+  const { metrics: localMetrics, trafficHistory, resourceHistory, connected: agentConnected } = useLocalMetrics(5000);
 
   const totalDevices = devices.length;
   const upDevices = devices.filter(d => d.status === 'up').length;
