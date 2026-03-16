@@ -229,8 +229,8 @@ const Dashboard: React.FC = () => {
           </Card>
         </div>
 
-        {/* Network Traffic (Live) + CPU/Mem per device */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Network Traffic + CPU History + RAM History */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="glass-panel border-border">
             <CardHeader className="pb-2">
               <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -269,6 +269,71 @@ const Dashboard: React.FC = () => {
           </Card>
 
           <Card className="glass-panel border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5" />
+                CPU Usage — Local Machine {agentConnected && <Badge variant="outline" className="text-[9px] h-4 ml-1 bg-green-500/10 text-green-400 border-green-500/30">LIVE</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {resourceHistory.length > 1 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={resourceHistory}>
+                    <defs>
+                      <linearGradient id="cpuGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.4} />
+                        <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="time" tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                    <Tooltip {...tooltipStyle} formatter={(value: number) => `${value}%`} />
+                    <Area type="monotone" dataKey="cpu" name="CPU %" stroke={CHART_COLORS.primary} fill="url(#cpuGrad)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-xs text-muted-foreground">
+                  {agentConnected ? 'Collecting CPU data...' : 'Agent offline — start agent for live CPU'}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="glass-panel border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <HardDrive className="w-3.5 h-3.5" />
+                RAM Usage — Local Machine {agentConnected && <Badge variant="outline" className="text-[9px] h-4 ml-1 bg-green-500/10 text-green-400 border-green-500/30">LIVE</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {resourceHistory.length > 1 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <AreaChart data={resourceHistory}>
+                    <defs>
+                      <linearGradient id="memGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={CHART_COLORS.kubernetes} stopOpacity={0.4} />
+                        <stop offset="95%" stopColor={CHART_COLORS.kubernetes} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="time" tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: 'hsl(215, 15%, 50%)', fontSize: 11 }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                    <Tooltip {...tooltipStyle} formatter={(value: number) => `${value}%`} />
+                    <Area type="monotone" dataKey="memory" name="RAM %" stroke={CHART_COLORS.kubernetes} fill="url(#memGrad)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-xs text-muted-foreground">
+                  {agentConnected ? 'Collecting RAM data...' : 'Agent offline — start agent for live RAM'}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* CPU/Mem per device */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Card className="glass-panel border-border">
             <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider text-muted-foreground">CPU & Memory by Device</CardTitle></CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={250}>
@@ -283,7 +348,6 @@ const Dashboard: React.FC = () => {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-        </div>
 
         {/* Link speed + Container resources */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
