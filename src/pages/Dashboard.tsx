@@ -19,10 +19,12 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useLocalMetrics } from '@/hooks/useLocalMetrics';
-import RGL, { WidthProvider as WP } from 'react-grid-layout';
-import 'react-grid-layout/css/styles.css';
-import 'react-resizable/css/styles.css';
-
+// @ts-ignore - CJS module
+import ReactGridLayout from 'react-grid-layout';
+// @ts-ignore
+const Responsive = ReactGridLayout.Responsive;
+// @ts-ignore
+const WidthProvider = ReactGridLayout.WidthProvider;
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const CHART_COLORS = {
