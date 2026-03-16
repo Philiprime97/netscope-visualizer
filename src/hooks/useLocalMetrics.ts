@@ -57,5 +57,5 @@ export const useLocalMetrics = (intervalMs = 5000) => {
     return () => clearInterval(id);
   }, [poll, intervalMs]);
 
-  return { metrics, trafficHistory, connected };
+  return { metrics, trafficHistory, resourceHistory, connected };
 };
