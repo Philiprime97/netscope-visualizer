@@ -1,0 +1,12 @@
+class Config:
+
+    PORT = 5111
+
+    MAX_SCAN_WORKERS = 50
+
+    PING_TIMEOUT = 3
+
+    SNMP_TIMEOUT = 2
+    SNMP_RETRIES = 1
+
+    TRAFFIC_HISTORY_SIZE = 120
