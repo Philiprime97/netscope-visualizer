@@ -16,7 +16,9 @@ export interface ResourcePoint {
 export const useLocalMetrics = (intervalMs = 5000) => {
   const [metrics, setMetrics] = useState<LocalMetrics | null>(null);
   const [trafficHistory, setTrafficHistory] = useState<TrafficPoint[]>([]);
+  const [resourceHistory, setResourceHistory] = useState<ResourcePoint[]>([]);
   const [connected, setConnected] = useState(false);
+  const MAX_RESOURCE_POINTS = 60;
 
   const poll = useCallback(async () => {
     const data = await getLocalMetrics();
