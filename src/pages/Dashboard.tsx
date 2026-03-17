@@ -449,7 +449,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Container Resources */}
-          <div key="containerResources">
+          <div key="containerResources" className="h-full">
             <PanelWrapper title="Container & Pod Resources" icon={<Box className="w-3.5 h-3.5" />}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 <ResponsiveContainer width="100%" height="100%">
