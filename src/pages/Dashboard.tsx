@@ -19,7 +19,9 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useLocalMetrics } from '@/hooks/useLocalMetrics';
+// @ts-ignore - types mismatch with installed version
 import { Responsive, WidthProvider } from 'react-grid-layout';
+// @ts-ignore
 const ResponsiveGridLayout = WidthProvider(Responsive);
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
