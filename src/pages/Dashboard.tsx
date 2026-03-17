@@ -19,12 +19,7 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useLocalMetrics } from '@/hooks/useLocalMetrics';
-// @ts-ignore - CJS module
-import ReactGridLayout from 'react-grid-layout';
-// @ts-ignore
-const Responsive = ReactGridLayout.Responsive;
-// @ts-ignore
-const WidthProvider = ReactGridLayout.WidthProvider;
+import { Responsive, WidthProvider } from 'react-grid-layout';
 const ResponsiveGridLayout = WidthProvider(Responsive);
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
