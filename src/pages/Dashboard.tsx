@@ -52,45 +52,45 @@ const STORAGE_KEY = 'netscope-dashboard-layouts';
 const defaultLayouts = {
   lg: [
     { i: 'kpi', x: 0, y: 0, w: 12, h: 3, minH: 2, minW: 6 },
-    { i: 'local', x: 0, y: 3, w: 4, h: 7, minH: 5, minW: 3 },
-    { i: 'categories', x: 4, y: 3, w: 4, h: 7, minH: 5, minW: 3 },
-    { i: 'avgResources', x: 8, y: 3, w: 4, h: 7, minH: 5, minW: 3 },
-    { i: 'traffic', x: 0, y: 10, w: 4, h: 8, minH: 6, minW: 3 },
-    { i: 'cpuHistory', x: 4, y: 10, w: 4, h: 8, minH: 6, minW: 3 },
-    { i: 'ramHistory', x: 8, y: 10, w: 4, h: 8, minH: 6, minW: 3 },
-    { i: 'deviceResources', x: 0, y: 18, w: 6, h: 8, minH: 6, minW: 3 },
-    { i: 'linkSpeed', x: 6, y: 18, w: 6, h: 8, minH: 6, minW: 3 },
-    { i: 'containerResources', x: 0, y: 26, w: 6, h: 7, minH: 5, minW: 3 },
-    { i: 'latency', x: 6, y: 26, w: 6, h: 7, minH: 5, minW: 3 },
-    { i: 'alerts', x: 0, y: 33, w: 12, h: 6, minH: 4, minW: 4 },
+    { i: 'local', x: 0, y: 3, w: 3, h: 6, minH: 4, minW: 3 },
+    { i: 'categories', x: 3, y: 3, w: 3, h: 6, minH: 4, minW: 3 },
+    { i: 'avgResources', x: 6, y: 3, w: 3, h: 6, minH: 4, minW: 3 },
+    { i: 'traffic', x: 9, y: 3, w: 3, h: 6, minH: 4, minW: 3 },
+    { i: 'cpuHistory', x: 0, y: 9, w: 4, h: 6, minH: 4, minW: 3 },
+    { i: 'ramHistory', x: 4, y: 9, w: 4, h: 6, minH: 4, minW: 3 },
+    { i: 'deviceResources', x: 8, y: 9, w: 4, h: 6, minH: 4, minW: 3 },
+    { i: 'linkSpeed', x: 0, y: 15, w: 4, h: 6, minH: 4, minW: 3 },
+    { i: 'containerResources', x: 4, y: 15, w: 4, h: 6, minH: 4, minW: 3 },
+    { i: 'latency', x: 8, y: 15, w: 4, h: 6, minH: 4, minW: 3 },
+    { i: 'alerts', x: 0, y: 21, w: 12, h: 5, minH: 3, minW: 4 },
   ],
   md: [
     { i: 'kpi', x: 0, y: 0, w: 10, h: 3, minH: 2, minW: 6 },
-    { i: 'local', x: 0, y: 3, w: 5, h: 7, minH: 5, minW: 3 },
-    { i: 'categories', x: 5, y: 3, w: 5, h: 7, minH: 5, minW: 3 },
-    { i: 'avgResources', x: 0, y: 10, w: 5, h: 7, minH: 5, minW: 3 },
-    { i: 'traffic', x: 5, y: 10, w: 5, h: 8, minH: 6, minW: 3 },
-    { i: 'cpuHistory', x: 0, y: 17, w: 5, h: 8, minH: 6, minW: 3 },
-    { i: 'ramHistory', x: 5, y: 17, w: 5, h: 8, minH: 6, minW: 3 },
-    { i: 'deviceResources', x: 0, y: 25, w: 5, h: 8, minH: 6, minW: 3 },
-    { i: 'linkSpeed', x: 5, y: 25, w: 5, h: 8, minH: 6, minW: 3 },
-    { i: 'containerResources', x: 0, y: 33, w: 5, h: 7, minH: 5, minW: 3 },
-    { i: 'latency', x: 5, y: 33, w: 5, h: 7, minH: 5, minW: 3 },
-    { i: 'alerts', x: 0, y: 40, w: 10, h: 6, minH: 4, minW: 4 },
+    { i: 'local', x: 0, y: 3, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'categories', x: 5, y: 3, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'avgResources', x: 0, y: 9, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'traffic', x: 5, y: 9, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'cpuHistory', x: 0, y: 15, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'ramHistory', x: 5, y: 15, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'deviceResources', x: 0, y: 21, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'linkSpeed', x: 5, y: 21, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'containerResources', x: 0, y: 27, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'latency', x: 5, y: 27, w: 5, h: 6, minH: 4, minW: 3 },
+    { i: 'alerts', x: 0, y: 33, w: 10, h: 5, minH: 3, minW: 4 },
   ],
   sm: [
     { i: 'kpi', x: 0, y: 0, w: 6, h: 4, minH: 2, minW: 4 },
-    { i: 'local', x: 0, y: 4, w: 6, h: 7, minH: 5, minW: 3 },
-    { i: 'categories', x: 0, y: 11, w: 6, h: 7, minH: 5, minW: 3 },
-    { i: 'avgResources', x: 0, y: 18, w: 6, h: 7, minH: 5, minW: 3 },
-    { i: 'traffic', x: 0, y: 25, w: 6, h: 8, minH: 6, minW: 3 },
-    { i: 'cpuHistory', x: 0, y: 33, w: 6, h: 8, minH: 6, minW: 3 },
-    { i: 'ramHistory', x: 0, y: 41, w: 6, h: 8, minH: 6, minW: 3 },
-    { i: 'deviceResources', x: 0, y: 49, w: 6, h: 8, minH: 6, minW: 3 },
-    { i: 'linkSpeed', x: 0, y: 57, w: 6, h: 8, minH: 6, minW: 3 },
-    { i: 'containerResources', x: 0, y: 65, w: 6, h: 7, minH: 5, minW: 3 },
-    { i: 'latency', x: 0, y: 72, w: 6, h: 7, minH: 5, minW: 3 },
-    { i: 'alerts', x: 0, y: 79, w: 6, h: 6, minH: 4, minW: 4 },
+    { i: 'local', x: 0, y: 4, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'categories', x: 0, y: 10, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'avgResources', x: 0, y: 16, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'traffic', x: 0, y: 22, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'cpuHistory', x: 0, y: 28, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'ramHistory', x: 0, y: 34, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'deviceResources', x: 0, y: 40, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'linkSpeed', x: 0, y: 46, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'containerResources', x: 0, y: 52, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'latency', x: 0, y: 58, w: 6, h: 6, minH: 4, minW: 3 },
+    { i: 'alerts', x: 0, y: 64, w: 6, h: 5, minH: 3, minW: 4 },
   ],
 };
 
@@ -227,7 +227,7 @@ const Dashboard: React.FC = () => {
           margin={[12, 12]}
         >
           {/* KPI Cards */}
-          <div key="kpi">
+          <div key="kpi" className="h-full">
             <PanelWrapper title="Overview" icon={<Server className="w-3.5 h-3.5" />}>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 p-3">
                 <KpiCard icon={<Server className="w-4 h-4" />} label="Devices" value={totalDevices} />
@@ -243,7 +243,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Local Machine */}
-          <div key="local">
+          <div key="local" className="h-full">
             <PanelWrapper title="Local Machine (Live)" icon={<MonitorSmartphone className="w-3.5 h-3.5" />}>
               <div className="p-4 space-y-4 overflow-auto h-[calc(100%-2.5rem)]">
                 {agentConnected && localMetrics ? (
@@ -281,7 +281,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Categories */}
-          <div key="categories">
+          <div key="categories" className="h-full">
             <PanelWrapper title="Device Categories" icon={<Network className="w-3.5 h-3.5" />}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -298,7 +298,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Avg Resources */}
-          <div key="avgResources">
+          <div key="avgResources" className="h-full">
             <PanelWrapper title="Avg Topology Resources" icon={<Cpu className="w-3.5 h-3.5" />}>
               <div className="p-4 space-y-4 overflow-auto h-[calc(100%-2.5rem)]">
                 <div className="space-y-2">
@@ -325,7 +325,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Network Traffic */}
-          <div key="traffic">
+          <div key="traffic" className="h-full">
             <PanelWrapper title="Network Traffic — Local Machine" icon={<TrendingUp className="w-3.5 h-3.5" />} live={agentConnected}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 {trafficHistory.length > 0 ? (
@@ -359,7 +359,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* CPU History */}
-          <div key="cpuHistory">
+          <div key="cpuHistory" className="h-full">
             <PanelWrapper title="CPU Usage — Local Machine" icon={<Cpu className="w-3.5 h-3.5" />} live={agentConnected}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 {resourceHistory.length > 1 ? (
@@ -387,7 +387,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* RAM History */}
-          <div key="ramHistory">
+          <div key="ramHistory" className="h-full">
             <PanelWrapper title="RAM Usage — Local Machine" icon={<HardDrive className="w-3.5 h-3.5" />} live={agentConnected}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 {resourceHistory.length > 1 ? (
@@ -415,7 +415,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Device Resources */}
-          <div key="deviceResources">
+          <div key="deviceResources" className="h-full">
             <PanelWrapper title="CPU & Memory by Device" icon={<Activity className="w-3.5 h-3.5" />}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -433,7 +433,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Link Speed */}
-          <div key="linkSpeed">
+          <div key="linkSpeed" className="h-full">
             <PanelWrapper title="Link Speed Distribution" icon={<Activity className="w-3.5 h-3.5" />}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -449,7 +449,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Container Resources */}
-          <div key="containerResources">
+          <div key="containerResources" className="h-full">
             <PanelWrapper title="Container & Pod Resources" icon={<Box className="w-3.5 h-3.5" />}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -467,7 +467,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Latency & Uptime */}
-          <div key="latency">
+          <div key="latency" className="h-full">
             <PanelWrapper title="Device Latency & Uptime" icon={<Activity className="w-3.5 h-3.5" />}>
               <div className="p-4 space-y-2 overflow-auto h-[calc(100%-2.5rem)]">
                 {devices.map(d => (
@@ -501,7 +501,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Alerts */}
-          <div key="alerts">
+          <div key="alerts" className="h-full">
             <PanelWrapper title="Active Alerts" icon={<AlertTriangle className="w-3.5 h-3.5 text-warning" />}>
               <div className="p-4 space-y-1 overflow-auto h-[calc(100%-2.5rem)]">
                 {alerts.length > 0 ? alerts.map(d => (
