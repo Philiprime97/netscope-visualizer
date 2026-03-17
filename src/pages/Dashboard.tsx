@@ -227,7 +227,7 @@ const Dashboard: React.FC = () => {
           margin={[12, 12]}
         >
           {/* KPI Cards */}
-          <div key="kpi">
+          <div key="kpi" className="h-full">
             <PanelWrapper title="Overview" icon={<Server className="w-3.5 h-3.5" />}>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 p-3">
                 <KpiCard icon={<Server className="w-4 h-4" />} label="Devices" value={totalDevices} />
