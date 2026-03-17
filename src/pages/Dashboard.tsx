@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTopology } from '@/contexts/TopologyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { DeviceIcon } from '@/components/topology/DeviceIcons';
@@ -19,15 +19,12 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useLocalMetrics } from '@/hooks/useLocalMetrics';
-// @ts-ignore - CJS module
-import ReactGridLayout from 'react-grid-layout';
-// @ts-ignore
-const Responsive = ReactGridLayout.Responsive;
-// @ts-ignore
-const WidthProvider = ReactGridLayout.WidthProvider;
-const ResponsiveGridLayout = WidthProvider(Responsive);
+import GridLayout from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+
+const getBreakpoint = (w: number) => w >= 1200 ? 'lg' : w >= 768 ? 'md' : 'sm';
+const colsMap: Record<string, number> = { lg: 12, md: 10, sm: 6 };
 
 const CHART_COLORS = {
   primary: 'hsl(185, 80%, 50%)',
@@ -113,11 +110,33 @@ const Dashboard: React.FC = () => {
   const { metrics: localMetrics, trafficHistory, resourceHistory, connected: agentConnected } = useLocalMetrics(5000);
   const [layouts, setLayouts] = useState(loadLayouts);
   const [locked, setLocked] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(1200);
 
-  const onLayoutChange = (_: any, allLayouts: any) => {
-    setLayouts(allLayouts);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(allLayouts));
-  };
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(el);
+    setContainerWidth(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
+
+  const bp = getBreakpoint(containerWidth);
+  const currentLayout = layouts[bp] || layouts.lg || defaultLayouts.lg;
+  const currentCols = colsMap[bp] || 12;
+
+  const onLayoutChange = useCallback((newLayout: any) => {
+    setLayouts((prev: any) => {
+      const updated = { ...prev, [bp]: newLayout };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, [bp]);
 
   const resetLayout = () => {
     setLayouts(defaultLayouts);
@@ -193,12 +212,12 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 md:p-6 w-full">
-        <ResponsiveGridLayout
+      <div className="p-4 md:p-6 w-full" ref={containerRef}>
+        <GridLayout
           className="layout"
-          layouts={layouts}
-          breakpoints={{ lg: 1200, md: 768, sm: 0 }}
-          cols={{ lg: 12, md: 10, sm: 6 }}
+          layout={currentLayout}
+          cols={currentCols}
+          width={containerWidth}
           rowHeight={30}
           onLayoutChange={onLayoutChange}
           isDraggable={!locked}
@@ -500,7 +519,7 @@ const Dashboard: React.FC = () => {
               </div>
             </PanelWrapper>
           </div>
-        </ResponsiveGridLayout>
+        </GridLayout>
       </div>
     </div>
   );
