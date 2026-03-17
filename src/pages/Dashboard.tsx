@@ -325,7 +325,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Network Traffic */}
-          <div key="traffic">
+          <div key="traffic" className="h-full">
             <PanelWrapper title="Network Traffic — Local Machine" icon={<TrendingUp className="w-3.5 h-3.5" />} live={agentConnected}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 {trafficHistory.length > 0 ? (
