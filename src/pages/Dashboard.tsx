@@ -501,7 +501,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Alerts */}
-          <div key="alerts">
+          <div key="alerts" className="h-full">
             <PanelWrapper title="Active Alerts" icon={<AlertTriangle className="w-3.5 h-3.5 text-warning" />}>
               <div className="p-4 space-y-1 overflow-auto h-[calc(100%-2.5rem)]">
                 {alerts.length > 0 ? alerts.map(d => (
