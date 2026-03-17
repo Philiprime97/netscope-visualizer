@@ -19,8 +19,8 @@ import {
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { useLocalMetrics } from '@/hooks/useLocalMetrics';
-import { WidthProvider, Responsive } from 'react-grid-layout';
-const ResponsiveGridLayout = WidthProvider(Responsive);
+import RGL, { WidthProvider } from 'react-grid-layout';
+const ResponsiveGridLayout = WidthProvider(RGL.Responsive ?? RGL);
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
