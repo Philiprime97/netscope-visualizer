@@ -213,6 +213,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="p-4 md:p-6 w-full" ref={containerRef}>
+        {/* @ts-ignore - types mismatch */}
         <GridLayout
           className="layout"
           layout={currentLayout}
