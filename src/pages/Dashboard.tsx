@@ -467,7 +467,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Latency & Uptime */}
-          <div key="latency">
+          <div key="latency" className="h-full">
             <PanelWrapper title="Device Latency & Uptime" icon={<Activity className="w-3.5 h-3.5" />}>
               <div className="p-4 space-y-2 overflow-auto h-[calc(100%-2.5rem)]">
                 {devices.map(d => (
