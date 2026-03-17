@@ -415,7 +415,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Device Resources */}
-          <div key="deviceResources">
+          <div key="deviceResources" className="h-full">
             <PanelWrapper title="CPU & Memory by Device" icon={<Activity className="w-3.5 h-3.5" />}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 <ResponsiveContainer width="100%" height="100%">
