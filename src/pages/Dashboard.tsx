@@ -298,7 +298,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Avg Resources */}
-          <div key="avgResources">
+          <div key="avgResources" className="h-full">
             <PanelWrapper title="Avg Topology Resources" icon={<Cpu className="w-3.5 h-3.5" />}>
               <div className="p-4 space-y-4 overflow-auto h-[calc(100%-2.5rem)]">
                 <div className="space-y-2">
