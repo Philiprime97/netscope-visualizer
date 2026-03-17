@@ -110,11 +110,33 @@ const Dashboard: React.FC = () => {
   const { metrics: localMetrics, trafficHistory, resourceHistory, connected: agentConnected } = useLocalMetrics(5000);
   const [layouts, setLayouts] = useState(loadLayouts);
   const [locked, setLocked] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(1200);
 
-  const onLayoutChange = (_: any, allLayouts: any) => {
-    setLayouts(allLayouts);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(allLayouts));
-  };
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    ro.observe(el);
+    setContainerWidth(el.clientWidth);
+    return () => ro.disconnect();
+  }, []);
+
+  const bp = getBreakpoint(containerWidth);
+  const currentLayout = layouts[bp] || layouts.lg || defaultLayouts.lg;
+  const currentCols = colsMap[bp] || 12;
+
+  const onLayoutChange = useCallback((newLayout: any) => {
+    setLayouts((prev: any) => {
+      const updated = { ...prev, [bp]: newLayout };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  }, [bp]);
 
   const resetLayout = () => {
     setLayouts(defaultLayouts);
