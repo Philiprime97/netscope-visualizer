@@ -20,9 +20,11 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useLocalMetrics } from '@/hooks/useLocalMetrics';
 import GridLayout from 'react-grid-layout';
-const ResponsiveGridLayout = (GridLayout as any).WidthProvider((GridLayout as any).Responsive || GridLayout);
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
+
+const getBreakpoint = (w: number) => w >= 1200 ? 'lg' : w >= 768 ? 'md' : 'sm';
+const colsMap: Record<string, number> = { lg: 12, md: 10, sm: 6 };
 
 const CHART_COLORS = {
   primary: 'hsl(185, 80%, 50%)',
