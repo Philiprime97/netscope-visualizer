@@ -519,7 +519,7 @@ const Dashboard: React.FC = () => {
               </div>
             </PanelWrapper>
           </div>
-        </GridLayout>
+        ])}
       </div>
     </div>
   );
