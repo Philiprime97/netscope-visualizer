@@ -433,7 +433,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Link Speed */}
-          <div key="linkSpeed">
+          <div key="linkSpeed" className="h-full">
             <PanelWrapper title="Link Speed Distribution" icon={<Activity className="w-3.5 h-3.5" />}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 <ResponsiveContainer width="100%" height="100%">
