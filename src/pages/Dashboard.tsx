@@ -359,7 +359,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* CPU History */}
-          <div key="cpuHistory">
+          <div key="cpuHistory" className="h-full">
             <PanelWrapper title="CPU Usage — Local Machine" icon={<Cpu className="w-3.5 h-3.5" />} live={agentConnected}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 {resourceHistory.length > 1 ? (
