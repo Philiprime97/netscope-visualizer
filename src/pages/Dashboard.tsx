@@ -387,7 +387,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* RAM History */}
-          <div key="ramHistory">
+          <div key="ramHistory" className="h-full">
             <PanelWrapper title="RAM Usage — Local Machine" icon={<HardDrive className="w-3.5 h-3.5" />} live={agentConnected}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 {resourceHistory.length > 1 ? (
