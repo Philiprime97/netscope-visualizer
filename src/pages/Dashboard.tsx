@@ -281,7 +281,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           {/* Categories */}
-          <div key="categories">
+          <div key="categories" className="h-full">
             <PanelWrapper title="Device Categories" icon={<Network className="w-3.5 h-3.5" />}>
               <div className="p-4 h-[calc(100%-2.5rem)]">
                 <ResponsiveContainer width="100%" height="100%">
