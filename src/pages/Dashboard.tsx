@@ -213,20 +213,19 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="p-4 md:p-6 w-full" ref={containerRef}>
-        {/* @ts-ignore - types mismatch */}
-        <GridLayout
-          className="layout"
-          layout={currentLayout}
-          cols={currentCols}
-          width={containerWidth}
-          rowHeight={30}
-          onLayoutChange={onLayoutChange}
-          isDraggable={!locked}
-          isResizable={!locked}
-          draggableHandle=".drag-handle"
-          compactType="vertical"
-          margin={[12, 12] as [number, number]}
-        >
+        {React.createElement(GridLayout as any, {
+          className: "layout",
+          layout: currentLayout,
+          cols: currentCols,
+          width: containerWidth,
+          rowHeight: 30,
+          onLayoutChange: onLayoutChange,
+          isDraggable: !locked,
+          isResizable: !locked,
+          draggableHandle: ".drag-handle",
+          compactType: "vertical",
+          margin: [12, 12],
+        }, [
           {/* KPI Cards */}
           <div key="kpi">
             <PanelWrapper title="Overview" icon={<Server className="w-3.5 h-3.5" />}>
