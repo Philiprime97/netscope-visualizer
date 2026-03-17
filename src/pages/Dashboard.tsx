@@ -212,19 +212,19 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 md:p-6 w-full">
-        <ResponsiveGridLayout
+      <div className="p-4 md:p-6 w-full" ref={containerRef}>
+        <GridLayout
           className="layout"
-          layouts={layouts}
-          breakpoints={{ lg: 1200, md: 768, sm: 0 }}
-          cols={{ lg: 12, md: 10, sm: 6 }}
+          layout={currentLayout}
+          cols={currentCols}
+          width={containerWidth}
           rowHeight={30}
           onLayoutChange={onLayoutChange}
           isDraggable={!locked}
           isResizable={!locked}
           draggableHandle=".drag-handle"
           compactType="vertical"
-          margin={[12, 12]}
+          margin={[12, 12] as [number, number]}
         >
           {/* KPI Cards */}
           <div key="kpi">
