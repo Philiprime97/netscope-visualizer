@@ -216,3 +216,37 @@
   stroke: hsl(var(--primary)) !important;
   stroke-width: 3 !important;
 }
+
+.react-grid-item {
+  transition: transform 180ms ease, width 180ms ease, height 180ms ease;
+}
+
+.react-grid-placeholder {
+  background: hsl(var(--primary) / 0.14) !important;
+  border: 1px dashed hsl(var(--primary) / 0.4) !important;
+  border-radius: var(--radius);
+  opacity: 1 !important;
+}
+
+.react-grid-item > .react-resizable-handle {
+  width: 18px !important;
+  height: 18px !important;
+  opacity: 1 !important;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid hsl(var(--primary) / 0.7);
+  border-bottom: 2px solid hsl(var(--primary) / 0.7);
+  border-radius: 1px;
+}
+
+.react-grid-item.react-grid-placeholder + .react-grid-item,
+.react-grid-item.resizing {
+  z-index: 10;
+}

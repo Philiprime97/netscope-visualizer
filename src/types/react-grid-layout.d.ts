@@ -1,6 +1,6 @@
 declare module 'react-grid-layout' {
   import * as React from 'react';
-  
+
   interface Layout {
     i: string;
     x: number;
@@ -14,6 +14,8 @@ declare module 'react-grid-layout' {
     static?: boolean;
   }
 
+  type ResizeHandleAxis = 's' | 'w' | 'e' | 'n' | 'sw' | 'nw' | 'se' | 'ne';
+
   interface GridLayoutProps {
     className?: string;
     layout?: Layout[];
@@ -26,6 +28,7 @@ declare module 'react-grid-layout' {
     draggableHandle?: string;
     compactType?: 'vertical' | 'horizontal' | null;
     margin?: [number, number];
+    resizeHandles?: ResizeHandleAxis[];
     children?: React.ReactNode;
   }
 
