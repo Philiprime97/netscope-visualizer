@@ -610,7 +610,7 @@ const Dashboard: React.FC = () => {
             draggableHandle=".drag-handle"
             compactType="vertical"
             margin={[8, 8]}
-            useCSSTransforms
+            
           >
             {panelIds.map(id => {
               const meta = getPanelMeta(id);
